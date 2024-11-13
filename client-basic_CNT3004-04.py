@@ -32,6 +32,9 @@ def main():
         if cmd == "TASK":
             client.send(cmd.encode(FORMAT))
 
+        elif cmd == "HELP":
+            client.send(cmd.encode(FORMAT)) # Source is from Dina: https://github.com/ayeshasdina/SOCKET-PROGRAMMING-with-Python/blob/main/client_2.py
+
         elif cmd == "LOGOUT":
             client.send(cmd.encode(FORMAT))
             break

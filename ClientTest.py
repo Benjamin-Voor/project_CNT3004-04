@@ -2,8 +2,11 @@ import os
 import socket
 import time
 
-IP = "10.221.82.245"
-PORT = 4450
+IP = "localhost"
+    ### Make sure this number matches the server you're connecting to.
+    # If both server and client are the same machine, then use these commands:
+        # "localhost" # socket.gethostbyname(socket.gethostname())
+PORT = 4450 # Make sure the port matches with the server
 ADDR = (IP, PORT)
 SIZE = 1024  ## byte .. buffer size
 FORMAT = "utf-8"
@@ -30,8 +33,9 @@ def main():
 
     ### multiple communications
     data = client.recv(SIZE).decode(FORMAT)
-    msg = data.split("@")
+    msg = data.split("@") # TODO: ¿Should this be in the while loop?
 
+    # TODO: Should "OK" be one of the commands?
 
     while True:
         command = input("> ")

@@ -2,8 +2,8 @@ import os
 import socket
 import threading
 
-IP = "10.221.82.245" ### gethostname()
-PORT = 4450
+IP = socket.gethostbyname(socket.gethostname()) # "localhost"
+PORT = 4450 # Make sure the port matches with the client
 ADDR = (IP,PORT)
 SIZE = 1024
 FORMAT = "utf-8"
@@ -41,10 +41,10 @@ def handle_client (conn,addr):
             conn.send(response.encode(FORMAT))
 
 
-        elif cmd == "UPLOAD" and len(data) > 0:
+        elif cmd == "UPLOAD" and len(data) > 0: # TODO: This crashes it
             filename = data[1]
             filepath = os.path.join(SERVER_PATH, filename)
-            conn.send("OK@Ready to recieve the file.".encode(FORMAT))
+            conn.send("OK@Ready to receive the file.".encode(FORMAT))
 
             with open(filepath, "wb") as f:
                 while True:
@@ -76,6 +76,9 @@ def handle_client (conn,addr):
                 conn.send("OK@File deleted successfully.".encode(FORMAT))
             else:
                 conn.send("ERROR@File not found.".encode(FORMAT))
+        # TODO: Add else statement
+        else:
+            conn.send("ERROR@Unknown command.".encode(FORMAT))
 
     conn.close()
     print(f"User: {addr} has disconnected")

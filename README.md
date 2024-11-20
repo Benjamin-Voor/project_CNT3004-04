@@ -22,9 +22,13 @@ TO run the client_1.py, you have to open another separate terminal/CMP and type 
 * https://www.educba.com/socket-programming-in-c-plus-plus/
 * https://www.bogotobogo.com/cplusplus/sockets_server_client.php
 
-* Images:
-    * prahou from analognowhere
-    * Bonsai, Tree, Green image. Free for use. https://pixabay.com/photos/bonsai-tree-green-plant-small-316573/
+* Files to be transferred:
+    * prahou from analognowhere. IChacker.jpg
+    * "Bonsai, Tree, Green image. Free for use." https://pixabay.com/photos/bonsai-tree-green-plant-small-316573/
+    * "Dog, Running, Away GIF. Free for use." GSDog.gif https://pixabay.com/gifs/dog-running-away-golden-retriever-7011/
+    * "Ball, Disco, Game GIF. Free for use." GCdisco.gif https://pixabay.com/gifs/ball-disco-game-party-bright-11083/
+    * VSleaves.mp4: Video by <a href="https://pixabay.com/users/mcpix22-26289376/?utm_source=link-attribution&utm_medium=referral&utm_campaign=video&utm_content=240320">Daniel McWilliams</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=video&utm_content=240320">Pixabay</a>
+    * VCboat.mp4: Video by <a href="https://pixabay.com/users/valentin_aleksandrov-33184095/?utm_source=link-attribution&utm_medium=referral&utm_campaign=video&utm_content=237249">Valentin Aleksandrov</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=video&utm_content=237249">Pixabay</a>
 
 ## copyright?
 

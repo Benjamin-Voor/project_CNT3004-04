@@ -1,12 +1,8 @@
 import os
 import socket
-import time
 
-IP = "localhost"
-    ### Make sure this number matches the server you're connecting to.
-    # If both server and client are the same machine, then use these commands:
-        # "localhost" # socket.gethostbyname(socket.gethostname())
-PORT = 4450 # Make sure the port matches with the server
+IP = "10.221.83.59"
+PORT = 4450
 ADDR = (IP, PORT)
 SIZE = 1024  ## byte .. buffer size
 FORMAT = "utf-8"
@@ -15,127 +11,61 @@ CLIENT_DATA = "client_data"
 if not os.path.exists(CLIENT_DATA):
     os.makedirs(CLIENT_DATA)
 
-
-
-def list_local_files():
-    ###List files in the client's local directory.
-    files = os.listdir(CLIENT_DATA)
-    if files:
-        print("Files in client directory:")
-        for filename in files:
-            print(f" - {filename}")
-    else:
-        print("No files in client directory.")
-
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
 
-    ### multiple communications
-    data = client.recv(SIZE).decode(FORMAT)
-    msg = data.split("@") # TODO: ¿Should this be in the while loop?
-
-    # TODO: Should "OK" be one of the commands?
-
     while True:
-        command = input("> ")
-        client.send(command.encode(FORMAT))
-        cmd, *data = command.split(" ")
 
-        if cmd == "LIST":
-            response = client.recv(SIZE).decode(FORMAT)
-            print(response.split("@")[1])
+        ### multiple communications
+        data = client.recv(SIZE).decode(FORMAT)
+        cmd, msg = data.split("@")
 
-        elif cmd == "UPLOAD" and len(data) > 0:
-            filename = data[0]
-            upload_file(client, filename)
-
-
-        elif cmd == "DOWNLOAD" and len(data) > 0:
-            filename = data[0]
-            download_file(client, filename)
-
-
-        elif cmd == "DELETE":
-            response = client.recv(SIZE).decode(FORMAT)
-            print(response.split("@")[1])
-
-        elif cmd == "OK":
+        if cmd == "OK":
             print(f"{msg}")
 
-        elif cmd == "DISCONNECTED":
-            print(f"{msg}")
+        elif cmd == "DISCONNECT":
+            print(f"msg")
             break
 
-        elif cmd == "TASK":
-            client.send(cmd.encode(FORMAT))
+        data = input("> ")
+        data = data.split(" ")
+        cmd = data[0]
 
+        if cmd == "HELP":
+            client.send(cmd.encode(FORMAT))
         elif cmd == "LOGOUT":
             client.send(cmd.encode(FORMAT))
             break
 
+        elif cmd == "LIST":
+            client.send(cmd.encode(FORMAT))
+
+        elif cmd == "UPLOAD":
+            path = data[1]
+            filename = path.split("/")[-1]
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    file_data = f.read()
+                send_data = f"{cmd}@{filename}@{len(file_data)}"
+                client.send(send_data.encode(FORMAT))
+                chunk_size = 1024
+                for i in range(0, len(file_data), chunk_size):
+                    client.send(file_data[i:i+chunk_size])
+
+
+                print(f"File {filename} has been sent successfully.")
+            else:
+                print(f"Error: Requested file does not exist.")
+
+
+        elif cmd == "DELETE":
+            client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+
+
 
     print("Disconnected from the server.")
-    client.close()  ## close the connection
-
-def upload_file(client, filename):
-    filepath = os.path.join(CLIENT_DATA, filename)
-
-    if os.path.exists(filepath):
-        client.recv(SIZE)
-
-        total_bytes_sent = 0
-        start_time = time.time()
-
-        with open(filepath, "rb") as f:
-            while bytes_read := f.read(SIZE):
-                client.send(bytes_read)
-                total_bytes_sent += len(bytes_read)
-        client.send(b"DONE")
-
-        duration, transfer_rate = calculate_metrics(total_bytes_sent, start_time)
-
-        print(f"Uploaded {filename} successfully!")
-        print(f"Total bytes sent: {total_bytes_sent} bytes")
-        print(f"Time taken: {duration:.2f} seconds")
-        print(f"Average Transfer Rate: {transfer_rate:.2f} KB/s")
-
-        print(client.recv(SIZE).decode(FORMAT))
-    else:
-        print("File does not exist.")
-
-def download_file(client, filename):
-    filepath = os.path.join(CLIENT_DATA, filename)
-
-    response = client.recv(SIZE).decode(FORMAT)
-    if "OK@" in response:
-
-        total_bytes_received = 0
-        start_time = time.time()
-
-        with open(filepath, "wb") as f:
-            while True:
-                bytes_read = client.recv(SIZE)
-                if bytes_read == b"DONE":
-                    break
-                f.write(bytes_read)
-                total_bytes_received += len(bytes_read)
-
-        duration, transfer_rate = calculate_metrics(total_bytes_received, start_time)
-
-        print(f"Downloaded {filename} successfully!")
-        print(f"Total bytes sent: {total_bytes_received} bytes")
-        print(f"Time taken: {duration:.2f} seconds")
-        print(f"Average Transfer Rate: {transfer_rate:.2f} KB/s")
-        print(f"Downloaded {filename}")
-    else:
-        print("File not found on server.")
-
-def calculate_metrics(total_bytes, start_time):
-    end_time = time.time()
-    duration = end_time - start_time
-    transfer_rate = (total_bytes / 1024) / duration  # KB per second
-    return duration, transfer_rate
+    client.close()
 
 if __name__ == "__main__":
     main()

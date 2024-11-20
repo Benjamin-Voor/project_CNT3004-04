@@ -1,6 +1,8 @@
 import os
 import socket
 import threading
+# TODO: import time, and use it to calculate metrics like upload/download time and transfer rate.
+    # The project requires collecting and analyzing performance metrics.
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -63,6 +65,8 @@ def handle_client (conn,addr):
 
             send_data = "OK@File has been successfully uploaded."
             conn.send(send_data.encode(FORMAT))
+
+        # TODO: cmd "DOWNLOAD"
 
         elif cmd == "DELETE":
             files = os.listdir(SERVER_PATH)

@@ -22,6 +22,10 @@ TO run the client_1.py, you have to open another separate terminal/CMP and type 
 * https://www.educba.com/socket-programming-in-c-plus-plus/
 * https://www.bogotobogo.com/cplusplus/sockets_server_client.php
 
+* Images:
+    * prahou from analognowhere
+    * Bonsai, Tree, Green image. Free for use. https://pixabay.com/photos/bonsai-tree-green-plant-small-316573/
+
 ## copyright?
 
 Uh, we're just students learning how to code. Also, everything we do is probably better explained by a YouTube video...

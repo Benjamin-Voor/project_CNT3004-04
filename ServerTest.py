@@ -1,8 +1,14 @@
+# TODO: import time, and use it to calculate metrics like upload/download time and transfer rate.
+    # The project requires collecting and analyzing performance metrics.
+# TODO: cmd "DOWNLOAD"
+# TODO: username/password authentication
+# TODO: support pics & vids
+# TODO: cmd mkdir
+# TODO: cmd ls
+
 import os
 import socket
 import threading
-# TODO: import time, and use it to calculate metrics like upload/download time and transfer rate.
-    # The project requires collecting and analyzing performance metrics.
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -50,7 +56,7 @@ def handle_client (conn,addr):
             send_data = "OK@"
 
             if len(files) == 0:
-                send_data += "The server currenly has no files."
+                send_data += "The server currently has no files."
             else:
                 send_data += "\n".join(f for f in files)
             conn.send(send_data.encode(FORMAT))
@@ -65,8 +71,6 @@ def handle_client (conn,addr):
 
             send_data = "OK@File has been successfully uploaded."
             conn.send(send_data.encode(FORMAT))
-
-        # TODO: cmd "DOWNLOAD"
 
         elif cmd == "DELETE":
             files = os.listdir(SERVER_PATH)

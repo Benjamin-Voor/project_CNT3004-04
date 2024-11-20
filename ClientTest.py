@@ -1,8 +1,11 @@
 import os
 import socket
 
-IP = "10.221.83.59"
-PORT = 4450
+IP = "localhost"
+    ### Make sure this number matches the server you're connecting to.
+    # If both server and client are the same machine, then use these commands:
+        # "localhost" # socket.gethostbyname(socket.gethostname())
+PORT = 4450 # Make sure the port matches with the server
 ADDR = (IP, PORT)
 SIZE = 1024  ## byte .. buffer size
 FORMAT = "utf-8"

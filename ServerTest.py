@@ -31,14 +31,25 @@ if not os.path.exists(SERVER_PATH):
 def handle_client (conn,addr):
 
     print(f"[CONNECTION ESTABLISHED] USER: {addr} has connected.")
-    conn.send("OK@Welcome to the server!".encode(FORMAT))
 
-    while True:
-        data = conn.recv(SIZE).decode(FORMAT)
-        print(data)
-        data = data.split("@")
-        print(data)
-        cmd = data[0]
+    # authentication
+    conn.send("UNAUTHENTICATED@Enter password (no spaces)".encode(FORMAT))
+    access_granted: bool = False
+
+    while not access_granted:
+        cmd, data = receive_from_client(conn)
+        print(f"password has been typed: {cmd}")
+        if cmd == "password" or data == "password":
+            conn.send("OK@Welcome to the server!".encode(FORMAT))
+            access_granted = True
+            break
+        elif cmd == "LOGOUT":
+            break
+        else:
+            conn.send("UNAUTHENTICATED@Access denied!".encode(FORMAT))
+
+    while access_granted:
+        cmd, data = receive_from_client(conn)
 
         if cmd == "HELP":
             send_data = "OK@"
@@ -94,6 +105,15 @@ def handle_client (conn,addr):
 
 
     print(f"[CONNECTION TERMINATED] USER: {addr} has disconnected.")
+
+
+def receive_from_client(conn):
+    data = conn.recv(SIZE).decode(FORMAT)
+    data = data.split("@")
+    cmd = data[0]
+    print(cmd)
+    return cmd, data
+
 
 def main():
     print("Starting the server")

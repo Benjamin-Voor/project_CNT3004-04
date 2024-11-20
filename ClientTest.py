@@ -24,9 +24,12 @@ if not os.path.exists(CLIENT_DATA):
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
+    client.connect(ADDR) # This could also use a try-except block...
+
+    access_granted: bool = False
 
     while True:
+
 
         ### multiple communications
         data = client.recv(SIZE).decode(FORMAT)
@@ -34,7 +37,11 @@ def main():
 
         typo: bool = False
 
+        if cmd == "UNAUTHENTICATED":
+            access_granted = False
+            print(f"{msg}")
         if cmd == "OK":
+            access_granted = True
             print(f"{msg}") # By placing this at the top, 99% of commands will be addressed first
 
         # Benjamin believes the block below is a typo:
@@ -52,11 +59,17 @@ def main():
         data = data.split(" ")
         cmd = data[0]
 
-        if cmd == "HELP":
-            client.send(cmd.encode(FORMAT))
-        elif cmd == "LOGOUT":
+        # This is the only command that does not require access_granted
+        if cmd == "LOGOUT":
             client.send(cmd.encode(FORMAT))
             break
+
+        # authentication
+        elif not access_granted:
+            client.send(cmd.encode(FORMAT))  # send password attempt
+
+        elif cmd == "HELP":
+            client.send(cmd.encode(FORMAT))
 
         elif cmd == "LIST":
             client.send(cmd.encode(FORMAT))
@@ -67,7 +80,7 @@ def main():
             if os.path.exists(path):
                 with open(path, "rb") as f:
                     file_data = f.read()
-                if typo:
+                if not typo:
                     send_data = f"{cmd}@{filename}@{len(file_data)}"
                 else:
                     send_data = f"{cmd}@{filename}@{file_data}"
@@ -87,15 +100,18 @@ def main():
                 client.send(f"{cmd}@{data[1]}".encode(FORMAT))
             except IndexError as e:
                 raise IndexError("Invalid input for DELETE command. Enter \"HELP\" for correct implementation.") from e
+        elif cmd == "DOWNLOAD":
+            print("Nope, that\'s not implemented yet!")
+            continue
         else:
-            print(f"Unknown command: {cmd}")
+            print(f"[client.py]: Unknown command: {cmd}")
             cmd = "LOGOUT"
             client.send(cmd.encode(FORMAT))
             break
-                # otherwise it just gets stuck on an infinite loop.
-                # Covering this edge case is not a requirement.
-                # This is not important to deal with right now.
-                # But at least now I won't have to restart the terminal every five seconds
+            # otherwise it just gets stuck on an infinite loop.
+            # Covering this edge case is not a requirement.
+            # This is not important to deal with right now.
+            # But at least now I won't have to restart the terminal every five seconds
 
     print("Disconnected from the server.")
     client.close()

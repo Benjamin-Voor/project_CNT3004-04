@@ -20,7 +20,7 @@ FORMAT = "utf-8"
 CLIENT_DATA = "client_data"
 
 if not os.path.exists(CLIENT_DATA):
-    os.makedirs(CLIENT_DATA)
+    os.makedirs(CLIENT_DATA) # Make client_data folder if it doesn't exist
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,12 +32,21 @@ def main():
         data = client.recv(SIZE).decode(FORMAT)
         cmd, msg = data.split("@")
 
-        if cmd == "OK":
-            print(f"{msg}")
+        typo: bool = False
 
-        elif cmd == "DISCONNECT":
+        if cmd == "OK":
+            print(f"{msg}") # By placing this at the top, 99% of commands will be addressed first
+
+        # Benjamin believes the block below is a typo:
+        elif cmd == "DISCONNECT" and not typo:
             print(f"msg")
             break
+        # Idiot Developer types it differently at timestamp 18:04
+        # Hyperlink: https://youtu.be/FQ-scCeKWas?si=Z7_QU1ZmvUJCsbPN
+        elif cmd == "DISCONNECTED" and typo:
+            print(f"[SERVER]: {msg}")
+            break
+
 
         data = input("> ")
         data = data.split(" ")
@@ -58,7 +67,10 @@ def main():
             if os.path.exists(path):
                 with open(path, "rb") as f:
                     file_data = f.read()
-                send_data = f"{cmd}@{filename}@{len(file_data)}"
+                if typo:
+                    send_data = f"{cmd}@{filename}@{len(file_data)}"
+                else:
+                    send_data = f"{cmd}@{filename}@{file_data}"
                 client.send(send_data.encode(FORMAT))
                 chunk_size = 1024
                 for i in range(0, len(file_data), chunk_size):
@@ -75,7 +87,15 @@ def main():
                 client.send(f"{cmd}@{data[1]}".encode(FORMAT))
             except IndexError as e:
                 raise IndexError("Invalid input for DELETE command. Enter \"HELP\" for correct implementation.") from e
-
+        else:
+            print(f"Unknown command: {cmd}")
+            cmd = "LOGOUT"
+            client.send(cmd.encode(FORMAT))
+            break
+                # otherwise it just gets stuck on an infinite loop.
+                # Covering this edge case is not a requirement.
+                # This is not important to deal with right now.
+                # But at least now I won't have to restart the terminal every five seconds
 
     print("Disconnected from the server.")
     client.close()

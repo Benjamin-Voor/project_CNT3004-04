@@ -1,10 +1,12 @@
-# TODO: import time, and use it to calculate metrics like upload/download time and transfer rate.
-    # The project requires collecting and analyzing performance metrics.
+# TODO: Collect and analyze performance metrics like upload/download time and transfer rate.
+    # Maybe import time or tqdm.
 # TODO: cmd "DOWNLOAD"
+    # "UPLOAD" contents of file, not just its name.
 # TODO: username/password authentication
 # TODO: support pics & vids
 # TODO: cmd mkdir
 # TODO: cmd ls
+# TODO: unknown cmd (Add else statement?)
 
 import os
 import socket
@@ -41,8 +43,8 @@ def handle_client (conn,addr):
         if cmd == "HELP":
             send_data = "OK@"
             send_data += "LIST: Lists all files currently in the server.\n"
-            send_data += "UPLOAD <path>: Uploads a new file to the server.\n"
-            send_data += "DELETE <filename>: Deletes a file from the server.\n"
+            send_data += "UPLOAD <path>: Uploads a new file to the server.\n" # Note: Include 'client_data/' at the start and file extension at the end.
+            send_data += "DELETE <filename>: Deletes a file from the server.\n" # Do not include file extension
             send_data += "LOGOUT: Disconnects from the server.\n"
             send_data += "HELP: Displays all client commands for the server.\n"
 
@@ -64,7 +66,6 @@ def handle_client (conn,addr):
         elif cmd == "UPLOAD":
             name = data[1]
             text = data[2]
-
             filepath = os.path.join(SERVER_PATH, name)
             with open(filepath, "w") as f:
                 f.write(text)
@@ -85,6 +86,10 @@ def handle_client (conn,addr):
                     send_data += "File has been successfully deleted."
                 else:
                     send_data += "Error: file does not exist."
+            conn.send(send_data.encode(FORMAT))
+        else:
+            send_data = "OK@"
+            send_data += "Unknown command."
             conn.send(send_data.encode(FORMAT))
 
 

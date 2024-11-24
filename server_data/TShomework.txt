@@ -1,0 +1,42 @@
+Q1. What is information technology, and why is it important to a business?
+	
+A.	Information technology is a combination of hardware and software products and services. A business uses it to manage, access, communicate, and share information.
+	
+2. Identify the main components of an information system.
+	
+A.	Hardware, Software, Data, Processes, and People.
+	
+3. Explain the difference between vertical and horizontal systems. 
+	
+A.	
+	
+4. What is a SWOT analysis and why is it important?
+	
+A.	An examination of a company's strengths (S), weaknesses (W), opportunities (O), and threats (T). It helps to avoid seeking goals that are unrealistic, unprofitable, or unachievable
+	
+5. What is feasibility? List and briefly discuss four feasibility tests.
+		Section 2.7
+A.	Feasibility is one of the tests that determine whether a systems request is worthwhile to proceed further. 
+	
+	TESTS:
+	
+	Operational feasibility
+		
+		Is the proposal desirable in an operational sense? Is it a practical approach that will solve a problem or take advantage of an opportunity to achieve company goals?
+		
+	Economic feasibility
+		
+		Is the proposal economically feasible? Will the projected benefits outweigh the estimated Total Cost of Ownership involved in acquiring, installing, supporting, maintaining, and operating the proposed system?
+		
+	Technical feasibility
+		
+		Is the proposal technically feasible? Does the company already have the necessary hardware, software, and network resources, or does it have to acquire them? If they have to be acquired, how hard will that be? Is the staff trained to use it? Do you need a prototype? Is it future-proofed?
+		
+	Schedule feasibility. 
+		
+		Will it be done in time? If not, then what can be sacrificed to speed up the project? Can you sacrifice money, man hours, or the quality of the product?
+		
+6. How do tangible benefits differ from intangible benefits?
+	
+	Tangible costs can be measured in dollar amounts. Intangible costs cannot, such as low employee morale. Intangible benefits include employee job satisfaction, 
+which can't be quantified with exact certainty.

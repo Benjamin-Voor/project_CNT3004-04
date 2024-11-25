@@ -11,9 +11,7 @@
 import os
 import socket
 import threading
-from encryption import *
-
-password = "password" # authentication
+import hashlib
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -37,19 +35,16 @@ def handle_client (conn,addr):
 
     # authentication
     conn.send("UNAUTHENTICATED@Enter password (no spaces)".encode(FORMAT))
+
+    # Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
     access_granted: bool = False
+    password = "password"
+    hash = hashlib.new('sha256', password.encode(FORMAT)).hexdigest()
 
     while not access_granted:
         cmd, data = receive_from_client(conn)
-        print(f"password has been typed: {cmd}")
 
-        password_attempt = bytes(cmd, FORMAT)
-        print("byte string", password_attempt)
-
-        password_attempt = fernet.decrypt(password_attempt).decode()
-        print("password attempt", password_attempt)
-
-        if password_attempt == password: # encryption.py
+        if cmd == hash: # cmd is already hashed.
             conn.send("OK@Welcome to the server!".encode(FORMAT))
             access_granted = True
             break
@@ -121,7 +116,6 @@ def receive_from_client(conn):
     data = conn.recv(SIZE).decode(FORMAT)
     data = data.split("@")
     cmd = data[0]
-    print(cmd)
     return cmd, data
 
 

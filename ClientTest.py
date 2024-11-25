@@ -8,7 +8,7 @@
 
 import os
 import socket
-from encryption import *
+import hashlib
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -43,7 +43,7 @@ def main():
             print(f"{msg}")
         if cmd == "OK":
             access_granted = True
-            print(f"{msg}") # By placing this at the top, 99% of commands will be addressed first
+            print(f"{msg}")
 
         # Benjamin believes the block below is a typo:
         elif cmd == "DISCONNECT" and not typo:
@@ -67,9 +67,8 @@ def main():
 
         # authentication
         elif not access_granted:
-            password_attempt = fernet.encrypt(cmd.encode(FORMAT)) # encryption
-            print(password_attempt)
-            client.send(password_attempt)  # send password attempt
+            password_attempt = hashlib.sha256(cmd.encode(FORMAT)).hexdigest() # encrypt before sending
+            client.send(password_attempt.encode(FORMAT))  # send password attempt
 
         elif cmd == "HELP":
             client.send(cmd.encode(FORMAT))

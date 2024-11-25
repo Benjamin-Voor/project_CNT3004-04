@@ -11,6 +11,9 @@
 import os
 import socket
 import threading
+from encryption import *
+
+password = "password" # authentication
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -39,7 +42,14 @@ def handle_client (conn,addr):
     while not access_granted:
         cmd, data = receive_from_client(conn)
         print(f"password has been typed: {cmd}")
-        if cmd == "password" or data == "password":
+
+        password_attempt = bytes(cmd, FORMAT)
+        print("byte string", password_attempt)
+
+        password_attempt = fernet.decrypt(password_attempt).decode()
+        print("password attempt", password_attempt)
+
+        if password_attempt == password: # encryption.py
             conn.send("OK@Welcome to the server!".encode(FORMAT))
             access_granted = True
             break

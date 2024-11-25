@@ -8,6 +8,7 @@
 
 import os
 import socket
+from encryption import *
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -22,11 +23,11 @@ CLIENT_DATA = "client_data"
 if not os.path.exists(CLIENT_DATA):
     os.makedirs(CLIENT_DATA) # Make client_data folder if it doesn't exist
 
+
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR) # This could also use a try-except block...
-
-    access_granted: bool = False
+    access_granted: bool = False # authentication
 
     while True:
 
@@ -66,7 +67,9 @@ def main():
 
         # authentication
         elif not access_granted:
-            client.send(cmd.encode(FORMAT))  # send password attempt
+            password_attempt = fernet.encrypt(cmd.encode(FORMAT)) # encryption
+            print(password_attempt)
+            client.send(password_attempt)  # send password attempt
 
         elif cmd == "HELP":
             client.send(cmd.encode(FORMAT))

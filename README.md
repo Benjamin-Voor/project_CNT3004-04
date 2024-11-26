@@ -37,3 +37,6 @@ TO run the client_1.py, you have to open another separate terminal/CMP and type 
 ## copyright?
 
 Uh, we're just students learning how to code. Also, everything we do is probably better explained by a YouTube video...
+
+# Disclaimer
+This is a random GitHub post. You run this code at your own risk. We are not responsible if your server and client data are leaked. Namely, we admit that SHA256 is insufficient cryptography for password storage.

@@ -33,27 +33,9 @@ def handle_client (conn,addr):
 
     print(f"[CONNECTION ESTABLISHED] USER: {addr} has connected.")
 
-    # authentication
-    conn.send("UNAUTHENTICATED@Enter password (no spaces)".encode(FORMAT))
+    access_granted, received_username = authentication(conn)
 
-    # Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
-    access_granted: bool = False
-    password = "password"
-    hash = hashlib.new('sha256', password.encode(FORMAT)).hexdigest()
-
-    while not access_granted:
-        cmd, data = receive_from_client(conn)
-
-        if cmd == hash: # cmd is already hashed.
-            conn.send("OK@Welcome to the server!".encode(FORMAT))
-            access_granted = True
-            break
-        elif cmd == "LOGOUT":
-            break
-        else:
-            conn.send("UNAUTHENTICATED@Access denied!".encode(FORMAT))
-
-    while access_granted:
+    while access_granted and received_username:
         cmd, data = receive_from_client(conn)
 
         if cmd == "HELP":
@@ -110,6 +92,42 @@ def handle_client (conn,addr):
 
 
     print(f"[CONNECTION TERMINATED] USER: {addr} has disconnected.")
+
+
+def authentication(conn):
+    username = "username"
+    password = "password"
+
+    # username
+    conn.send("UNAUTHENTICATED@Enter username (no spaces)".encode(FORMAT))
+    received_username: bool = False
+    hash_username = hashlib.new('sha256', username.encode(FORMAT)).hexdigest()  # encryption
+    while not received_username:
+        cmd, data = receive_from_client(conn)
+        if cmd == hash_username:
+            received_username = True
+            break  # go to entering password
+        elif cmd == "LOGOUT":
+            break  # disconnect
+        else:
+            conn.send("UNAUTHENTICATED@Wrong username. Access denied!".encode(FORMAT))
+
+    # password
+    conn.send("UNAUTHENTICATED@Enter password (no spaces)".encode(FORMAT))
+    # Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
+    access_granted: bool = False
+    hash_password = hashlib.new('sha256', password.encode(FORMAT)).hexdigest()  # encryption
+    while not access_granted and received_username:
+        cmd, data = receive_from_client(conn)
+        if cmd == hash_password:  # cmd is already hashed.
+            conn.send("OK@Welcome to the server!".encode(FORMAT))
+            access_granted = True
+            break
+        elif cmd == "LOGOUT":
+            break
+        else:
+            conn.send("UNAUTHENTICATED@Wrong password. Access denied!".encode(FORMAT))
+    return access_granted, received_username
 
 
 def receive_from_client(conn):

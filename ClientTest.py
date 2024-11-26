@@ -26,6 +26,8 @@ if not os.path.exists(CLIENT_DATA):
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # AF_INET = IPv4
+        # SOCK_STREAM = TCP
     client.connect(ADDR) # This could also use a try-except block...
     access_granted: bool = False # authentication
 

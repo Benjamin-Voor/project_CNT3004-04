@@ -8,10 +8,13 @@
 # TODO: cmd ls
 # TODO: unknown cmd (Add else statement?)
 
-import os
-import socket
-import threading
-import hashlib
+import os # file manipulation
+import socket # TCP connection over IPv4
+import threading # Multiple threads represent multiple clients
+import hashlib # encryption
+import time # metrics
+import logging # metrics and debugging
+from tqdm import tqdm # metrics
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -27,6 +30,9 @@ SERVER_PATH = "server_data"
 if not os.path.exists(SERVER_PATH):
     os.makedirs(SERVER_PATH)
 
+# Create a logger
+logger = logging.getLogger('my logger')
+logger.setLevel(logging.DEBUG)
 
 ### Handles incoming clients to the server
 def handle_client (conn,addr):
@@ -36,60 +42,78 @@ def handle_client (conn,addr):
     access_granted, received_username = authentication(conn)
 
     while access_granted and received_username:
-        cmd, data = receive_from_client(conn)
+        try:
+            cmd, data = receive_from_client(conn)
 
-        if cmd == "HELP":
-            send_data = "OK@"
-            send_data += "LIST: Lists all files currently in the server.\n"
-            send_data += "UPLOAD <path>: Uploads a new file to the server.\n" # Note: Include 'client_data/' at the start and file extension at the end.
-            send_data += "DELETE <filename>: Deletes a file from the server.\n" # Do not include file extension
-            send_data += "LOGOUT: Disconnects from the server.\n"
-            send_data += "HELP: Displays all client commands for the server.\n"
+            if cmd == "HELP":
+                send_data = "OK@"
+                send_data += "LIST: Lists all files currently in the server.\n"
+                send_data += "UPLOAD <path>: Uploads a new file to the server.\n" # Note: Include 'client_data/' at the start and file extension at the end.
+                send_data += "DELETE <filename>: Deletes a file from the server.\n" # Do not include file extension
+                send_data += "LOGOUT: Disconnects from the server.\n"
+                send_data += "HELP: Displays all client commands for the server.\n"
 
-            conn.send(send_data.encode(FORMAT))
+                conn.send(send_data.encode(FORMAT))
 
-        elif cmd == "LOGOUT":
-            break
+            elif cmd == "LOGOUT":
+                break
 
-        elif cmd == "LIST":
-            files = os.listdir(SERVER_PATH)
-            send_data = "OK@"
+            elif cmd == "LIST":
+                files = os.listdir(SERVER_PATH)
+                send_data = "OK@"
 
-            if len(files) == 0:
-                send_data += "The server currently has no files."
-            else:
-                send_data += "\n".join(f for f in files)
-            conn.send(send_data.encode(FORMAT))
-
-        elif cmd == "UPLOAD":
-            name = data[1]
-            text = data[2]
-            filepath = os.path.join(SERVER_PATH, name)
-            with open(filepath, "w") as f:
-                f.write(text)
-
-            send_data = "OK@File has been successfully uploaded."
-            conn.send(send_data.encode(FORMAT))
-
-        elif cmd == "DELETE":
-            files = os.listdir(SERVER_PATH)
-            send_data = "OK@"
-            filename = data[1]
-
-            if len(files) == 0:
-                send_data += "The server has no files."
-            else:
-                if filename in files:
-                    os.remove(f"{SERVER_PATH}/{filename}")
-                    send_data += "File has been successfully deleted."
+                if len(files) == 0:
+                    send_data += "The server currently has no files."
                 else:
-                    send_data += "Error: file does not exist."
-            conn.send(send_data.encode(FORMAT))
-        else:
-            send_data = "OK@"
-            send_data += "Unknown command."
-            conn.send(send_data.encode(FORMAT))
+                    send_data += "\n".join(f for f in files)
+                conn.send(send_data.encode(FORMAT))
 
+            elif cmd == "UPLOAD":
+                file_size = int(conn.recv(1024).decode())
+                name = data[1]
+                text = data[2]
+                filepath = os.path.join(SERVER_PATH, name)
+
+                start_time = time.time()
+                with open(filepath, "wb") as f: # add 'b' to account for pictures and videos
+                    with tqdm(total=file_size, unit='B', unit_scale=True, desc=f"Receiving {name}") as progress_bar:
+                        while True:
+                            data = conn.recv(1024)
+                            if not data:
+                                break
+                            f.write(data)
+                            progress_bar.update(len(data))
+                end_time = time.time()
+                transfer_time = end_time - start_time
+                throughput = file_size / transfer_time
+
+                logger.info(f"Client {addr} transferred {name} ({file_size} bytes) in {transfer_time:.2f} seconds.")
+                logger.info(f"Throughput: {throughput:.2f} bytes/second")
+
+                send_data = "OK@File has been successfully uploaded."
+                conn.send(send_data.encode(FORMAT))
+
+            elif cmd == "DELETE":
+                files = os.listdir(SERVER_PATH)
+                send_data = "OK@"
+                filename = data[1]
+
+                if len(files) == 0:
+                    send_data += "The server has no files."
+                else:
+                    if filename in files:
+                        os.remove(f"{SERVER_PATH}/{filename}")
+                        send_data += "File has been successfully deleted."
+                    else:
+                        send_data += "Error: file does not exist."
+                conn.send(send_data.encode(FORMAT))
+            else:
+                send_data = "OK@"
+                send_data += "Unknown command."
+                conn.send(send_data.encode(FORMAT))
+        except Exception as e:
+            logging.error(f"Error handling client: {e}")
+            break
 
     print(f"[CONNECTION TERMINATED] USER: {addr} has disconnected.")
 

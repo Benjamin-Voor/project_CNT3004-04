@@ -1,3 +1,5 @@
+# Source: https://www.youtube.com/watch?v=FQ-scCeKWas
+
 import socket
 
 IP = socket.gethostbyname(socket.gethostname())

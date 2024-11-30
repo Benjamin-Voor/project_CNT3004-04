@@ -89,9 +89,17 @@ def main():
                 else:
                     send_data = f"{cmd}@{filename}@{file_data}"
                 client.send(send_data.encode(FORMAT))
-                chunk_size = 1024
-                for i in range(0, len(file_data), chunk_size):
-                    client.send(file_data[i:i+chunk_size])
+
+
+
+                if not typo:
+                    chunk_size = 1024
+                    for i in range(0, len(file_data), chunk_size):
+                        client.send(file_data[i:i+chunk_size])
+                else:
+                    for i in range(0, len(file_data), SIZE):
+                        client.send(file_data[i:i+SIZE])
+                    # 1024 is already a defined constant. Just re-use it instead of making another one named "chunk_size" --Benjamin
 
 
                 print(f"File {filename} has been sent successfully.")

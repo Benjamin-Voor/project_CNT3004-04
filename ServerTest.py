@@ -6,22 +6,29 @@ IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
     # If both server and client are the same machine, then use these commands:
         # "localhost" # socket.gethostbyname(socket.gethostname())
-PORT = 4450 # Make sure the port matches with the server
-ADDR = (IP,PORT)
-SIZE = 1024
+PORT = 4451
+ADDR = (IP, PORT)
+SIZE = 65536
 FORMAT = "utf-8"
-SERVER_PATH = "server_data"
+SERVER_DATA_PATH = "server_data"
 
 ### Ensures that the server data path exists
 if not os.path.exists(SERVER_PATH):
     os.makedirs(SERVER_PATH)
 
+def list_directory_contents(directory):
+    file_list = []
+    for root, dirs, files in os.walk(directory):
+        for name in dirs:
+            file_list.append(os.path.relpath(os.path.join(root, name), directory) + '/')
+        for name in files:
+            file_list.append(os.path.relpath(os.path.join(root, name), directory))
+    return file_list
 
 ### Handles incoming clients to the server
-def handle_client (conn,addr):
-
-    print(f"[CONNECTION ESTABLISHED] USER: {addr} has connected.")
-    conn.send("OK@Welcome to the server!".encode(FORMAT))
+def handle_client(conn, addr):
+    print(f"[NEW CONNECTION] {addr} connected.")
+    conn.send("OK@Welcome to the File Server.".encode(FORMAT))
 
     while True:
         data = conn.recv(SIZE).decode(FORMAT)

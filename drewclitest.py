@@ -1,8 +1,11 @@
 import os
 import socket
 
-IP = "208.194.1.25"  # Use your server's IP address
-PORT = 4451
+IP = "localhost"
+    ### Make sure this number matches the server you're connecting to.
+    # If both server and client are the same machine, then use these commands:
+        # "localhost" # socket.gethostbyname(socket.gethostname())
+PORT = 4450 # Make sure the port matches with the server
 ADDR = (IP, PORT)
 FORMAT = "utf-8"
 SIZE = 1024
@@ -17,6 +20,8 @@ def main():
     print("Connected to the server")
 
     while True:
+
+        ### multiple communications
         data = client.recv(SIZE).decode(FORMAT)
         if "@" in data:
             cmd, msg = data.split("@", 1)

@@ -9,8 +9,9 @@ SIZE = 65536
 FORMAT = "utf-8"
 SERVER_DATA_PATH = "server_data"
 
-if not os.path.exists(SERVER_DATA_PATH):
-    os.makedirs(SERVER_DATA_PATH)
+### Ensures that the server data path exists
+if not os.path.exists(SERVER_PATH):
+    os.makedirs(SERVER_PATH)
 
 def list_directory_contents(directory):
     file_list = []
@@ -21,6 +22,7 @@ def list_directory_contents(directory):
             file_list.append(os.path.relpath(os.path.join(root, name), directory))
     return file_list
 
+### Handles incoming clients to the server
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     conn.send("OK@Welcome to the File Server.".encode(FORMAT))
@@ -28,7 +30,7 @@ def handle_client(conn, addr):
     while True:
         data = conn.recv(SIZE).decode(FORMAT)
         if not data:
-            break
+            break # Don't check if-statements until data is received.
         data = data.split("@")
         cmd = data[0]
 
@@ -130,14 +132,14 @@ def handle_client(conn, addr):
 
 def main():
     print("[STARTING] Server is starting")
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(ADDR)
-    server.listen()
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ## used IPV4 and TCP connection
+    server.bind(ADDR) # bind the address
+    server.listen() ## start listening
     print(f"[LISTENING] Server is listening on {IP}:{PORT}.")
 
     while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        conn, addr = server.accept() ### accept a connection from a client
+        thread = threading.Thread(target=handle_client, args=(conn, addr)) ## assigning a thread for each client
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 

@@ -1,8 +1,6 @@
 # TODO: import time, and use it to calculate metrics like upload/download time and transfer rate.
     # The project requires collecting and analyzing performance metrics.
 # TODO: cmd "DOWNLOAD"
-# TODO: username/password authentication
-# TODO: support pics & vids
 # TODO: cmd mkdir
 # TODO: cmd ls
 
@@ -100,9 +98,15 @@ def main():
                 client.send(f"{cmd}@{data[1]}".encode(FORMAT))
             except IndexError as e:
                 raise IndexError("Invalid input for DELETE command. Enter \"HELP\" for correct implementation.") from e
+
         elif cmd == "DOWNLOAD":
             print("Nope, that\'s not implemented yet!")
             continue
+
+        elif cmd == "MKDIR":
+            print("Nope, that\'s not implemented yet!")
+            continue
+
         else:
             print(f"[client.py]: Unknown command: {cmd}")
             cmd = "LOGOUT"

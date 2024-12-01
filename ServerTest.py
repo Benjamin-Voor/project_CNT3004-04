@@ -1,4 +1,5 @@
 # TODO: Collect and analyze performance metrics like upload/download time and transfer rate.
+    # Both server and client applications
     # Maybe import time or tqdm.
     # FTP is not permitted.
 # TODO: cmd "DOWNLOAD"
@@ -8,6 +9,13 @@
 # TODO: cmd mkdir
 # TODO: cmd ls
 # TODO: unknown cmd (Add else statement?)
+# TODO: "Continue" from unknown commands and from try-except blocks, rather than presently breaking out of them.
+# TODO: Provide feedback to the user regarding the status of file transfers and operations.
+# TODO: Performance Analysis: Conduct experiments to measure the system's performance under various load conditions. Analyze the collected data to identify bottlenecks and areas for optimization.
+# TODO: Skip the security assessment. I don't know how to do that.
+# TODO: comprehensive project report
+# TODO: Add more python modules
+    # Maybe add the stuff that both client and server have in common, like import statements and the logger.
 
 import os
 import socket
@@ -28,10 +36,15 @@ SERVER_PATH = "server_data"
 ### Ensures that the server data path exists
 if not os.path.exists(SERVER_PATH):
     os.makedirs(SERVER_PATH)
-# Same thing as `os.makedirs(SERVER_PATH, exist_ok=True)`
+# Equivalent to `os.makedirs(SERVER_PATH, exist_ok=True)`
+
 
 logger = logging.getLogger('my logger')
 logger.setLevel(logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='[%(asctime)s] %(levelname)s: %(message)s',
+    datefmt='%m/%d/%Y %I:%M:%S %p')
 
 ### Handles incoming clients to the server
 def handle_client (conn,addr):
@@ -41,7 +54,10 @@ def handle_client (conn,addr):
     access_granted, received_username = authentication(conn)
 
     while access_granted and received_username:
-        cmd, data = receive_from_client(conn)
+        try:
+            cmd, data = receive_from_client(conn)
+        except ConnectionResetError:
+            break
 
         if cmd == "HELP":
             send_data = "OK@"
@@ -68,47 +84,83 @@ def handle_client (conn,addr):
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "UPLOAD":
-            name = data[1]
-            text = data[2]
+            try:
+                name = data[1]
+                text = data[2]
+            except IndexError as e:
+                raise IndexError(f"Invalid input for \"{cmd}\" command. Enter \"HELP\" for correct implementation.", f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.") from e
+
+            logging.info("Valid command. Writing file...")
             filepath = os.path.join(SERVER_PATH, name)
             with open(filepath, "wb") as f:
                 f.write(text)
 
+            logging.info("Uploaded file \"{filename}\"")
             send_data = "OK@File has been successfully uploaded."
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "DELETE":
             files = os.listdir(SERVER_PATH)
             send_data = "OK@"
-            filename = data[1]
+            try:
+                filename = data[1]
+            except IndexError as e:
+                logging.debug(f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.")
+                raise IndexError(f"Invalid input for \"{cmd}\" command. Enter \"HELP\" for correct implementation.", f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.") from e
 
             if len(files) == 0:
                 send_data += "The server has no files."
             else:
                 if filename in files:
                     os.remove(f"{SERVER_PATH}/{filename}")
-                    send_data += "File has been successfully deleted."
+                    logging.info("Deleted file \"{filename}\"")
+                    send_data += "File \"{filename}\" has been successfully deleted."
                 else:
-                    send_data += "Error: file does not exist."
+                    send_data += f"Error: file \"{filename}\" does not exist."
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "MKDIR":
             send_data = "OK@"
             # Leaf directory
-            name = data[1]
+            try:
+                name = data[1]
+            except IndexError as e:
+                logging.debug(f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.")
+                raise IndexError(f"Invalid input for \"{cmd}\" command. Enter \"HELP\" for correct implementation.", f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.") from e
             filepath = os.path.join(SERVER_PATH, name)
             try:
-                os.makedirs(filepath)
+                os.makedirs(filepath, exist_ok=False)
             except OSError as e:
-                send_data += f"Directory already exists {e}"
+                send_data += f"Directory \"{name}\" already exists {e}"
+                conn.send(send_data.encode(FORMAT))
                 continue
-            send_data += "Directory has been successfully created"
+            logging.info("Added directory \"{name}\"")
+            send_data += f"Directory \"{name}\" has been successfully created"
             conn.send(send_data.encode(FORMAT))
 
+        elif cmd == "RMDIR":
+            send_data = "OK@"
+            # Leaf directory
+            try:
+                name = data[1]
+            except IndexError as e:
+                logging.debug(f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.")
+                raise IndexError(f"Invalid input for \"{cmd}\" command. Enter \"HELP\" for correct implementation.", f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.") from e
+
+            filepath = os.path.join(SERVER_PATH, name)
+            try:
+                os.rmdir(filepath)
+            except OSError as e:
+                send_data += f"Directory \"{name}\" cannot be removed {e}"
+                conn.send(send_data.encode(FORMAT))
+                continue
+            logging.info("Removed directory \"{name}\"")
+            send_data += f"Directory \"{name}\" has been successfully removed!"
+            conn.send(send_data.encode(FORMAT))
 
         else:
             send_data = "OK@"
-            send_data += "Unknown command."
+            send_data += f"Unknown command \'{cmd}\'."
             conn.send(send_data.encode(FORMAT))
 
     print(f"[CONNECTION TERMINATED] USER: {addr} has disconnected.")
@@ -152,8 +204,11 @@ def authentication(conn):
 
 def receive_from_client(conn):
     data = conn.recv(SIZE).decode(FORMAT)
+    # logging.info("Data received: ", data) # causes logging errors
     data = data.split("@")
     cmd = data[0]
+    # logging.info("Data converted to: ", cmd, data) # causes logging errors
+    # logging.info("Command received:", cmd) # causes errors
     return cmd, data
 
 

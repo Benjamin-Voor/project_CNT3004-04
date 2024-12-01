@@ -1,5 +1,6 @@
 # TODO: Collect and analyze performance metrics like upload/download time and transfer rate.
     # Maybe import time or tqdm.
+    # FTP is not permitted.
 # TODO: cmd "DOWNLOAD"
     # "UPLOAD" contents of file, not just its name.
 # TODO: username/password authentication
@@ -12,6 +13,7 @@ import os
 import socket
 import threading
 import hashlib
+import logging
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -27,6 +29,8 @@ SERVER_PATH = "server_data"
 if not os.path.exists(SERVER_PATH):
     os.makedirs(SERVER_PATH)
 
+logger = logging.getLogger('my logger')
+logger.setLevel(logging.DEBUG)
 
 ### Handles incoming clients to the server
 def handle_client (conn,addr):
@@ -45,7 +49,8 @@ def handle_client (conn,addr):
             send_data += "DELETE <filename>: Deletes a file from the server.\n" # Do not include file extension
             send_data += "LOGOUT: Disconnects from the server.\n"
             send_data += "HELP: Displays all client commands for the server.\n"
-
+            send_data += "MKDIR: Create a new directory recursively. That means while making leaf directory if any intermediate-level directory is missing, MKDIR will create them all (separated by \'/\')."
+            send_data += "RMDIR: Remove an old directory recursively."
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "LOGOUT":
@@ -65,7 +70,7 @@ def handle_client (conn,addr):
             name = data[1]
             text = data[2]
             filepath = os.path.join(SERVER_PATH, name)
-            with open(filepath, "w") as f:
+            with open(filepath, "wb") as f:
                 f.write(text)
 
             send_data = "OK@File has been successfully uploaded."
@@ -85,11 +90,15 @@ def handle_client (conn,addr):
                 else:
                     send_data += "Error: file does not exist."
             conn.send(send_data.encode(FORMAT))
+
+        elif cmd == "MKDIR":
+            print("Nope, that\'s not implemented yet!")
+            continue
+
         else:
             send_data = "OK@"
             send_data += "Unknown command."
             conn.send(send_data.encode(FORMAT))
-
 
     print(f"[CONNECTION TERMINATED] USER: {addr} has disconnected.")
 

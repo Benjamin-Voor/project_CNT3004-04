@@ -28,6 +28,7 @@ def main():
         # SOCK_STREAM = TCP
     client.connect(ADDR) # This could also use a try-except block...
     access_granted: bool = False # authentication
+    typo: bool = False
 
     while True:
 
@@ -35,8 +36,6 @@ def main():
         ### multiple communications
         data = client.recv(SIZE).decode(FORMAT)
         cmd, msg = data.split("@")
-
-        typo: bool = False
 
         if cmd == "UNAUTHENTICATED":
             access_granted = False
@@ -99,17 +98,24 @@ def main():
 
         elif cmd == "DELETE":
             try:
-                client.send(f"{cmd}@{data[1]}".encode(FORMAT))
+                path = data[1]
             except IndexError as e:
                 raise IndexError("Invalid input for DELETE command. Enter \"HELP\" for correct implementation.") from e
+            client.send(f"{cmd}@{path}".encode(FORMAT))
 
         elif cmd == "DOWNLOAD":
             print("Nope, that\'s not implemented yet!")
             continue
 
         elif cmd == "MKDIR":
-            print("Nope, that\'s not implemented yet!")
-            continue
+            try:
+                path = data[1]
+            except IndexError as e:
+                raise IndexError("Invalid input for DELETE command. Enter \"HELP\" for correct implementation.") from e
+
+            filename = path.split("/")[-1]
+            send_data = f"{cmd}@{path}"
+            client.send(send_data.encode(FORMAT))
 
         else:
             print(f"[client.py]: Unknown command: {cmd}")

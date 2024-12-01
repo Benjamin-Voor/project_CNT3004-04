@@ -28,6 +28,7 @@ SERVER_PATH = "server_data"
 ### Ensures that the server data path exists
 if not os.path.exists(SERVER_PATH):
     os.makedirs(SERVER_PATH)
+# Same thing as `os.makedirs(SERVER_PATH, exist_ok=True)`
 
 logger = logging.getLogger('my logger')
 logger.setLevel(logging.DEBUG)
@@ -49,7 +50,7 @@ def handle_client (conn,addr):
             send_data += "DELETE <filename>: Deletes a file from the server.\n" # Do not include file extension
             send_data += "LOGOUT: Disconnects from the server.\n"
             send_data += "HELP: Displays all client commands for the server.\n"
-            send_data += "MKDIR: Create a new directory recursively. That means while making leaf directory if any intermediate-level directory is missing, MKDIR will create them all (separated by \'/\')."
+            send_data += "MKDIR: Create a new directory recursively. That means while making leaf directory if any intermediate-level directory is missing, MKDIR will create them all (separated by \'/\').\n"
             send_data += "RMDIR: Remove an old directory recursively."
             conn.send(send_data.encode(FORMAT))
 
@@ -92,8 +93,18 @@ def handle_client (conn,addr):
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "MKDIR":
-            print("Nope, that\'s not implemented yet!")
-            continue
+            send_data = "OK@"
+            # Leaf directory
+            name = data[1]
+            filepath = os.path.join(SERVER_PATH, name)
+            try:
+                os.makedirs(filepath)
+            except OSError as e:
+                send_data += f"Directory already exists {e}"
+                continue
+            send_data += "Directory has been successfully created"
+            conn.send(send_data.encode(FORMAT))
+
 
         else:
             send_data = "OK@"

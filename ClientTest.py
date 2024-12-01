@@ -39,9 +39,14 @@ def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # AF_INET = IPv4
         # SOCK_STREAM = TCP
-    client.connect(ADDR) # This could also use a try-except block...
+    try:
+        client.connect(ADDR)
+    except ConnectionRefusedError as e:
+        logging.error("Connection failed.")
+        raise ConnectionRefusedError("Refactor \"IP\" variable to Server\'s IP. Also, Start ServerTest.py on server machine before starting ClientTest.py.\n")
+
     access_granted: bool = False # authentication
-    typo: bool = False # Drew and Benjamin disagree on whether code should run one way or the other. When we finally agree, we'll flick this to true or false, or find and delete the unwanted blocks of code.
+    typo: bool = True # Drew and Benjamin disagree on whether code should run one way or the other. When we finally agree, we'll flick this to true or false, or find and delete the unwanted blocks of code.
 
     while True:
 

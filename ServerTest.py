@@ -92,7 +92,7 @@ def handle_client (conn,addr):
 
             logging.info("Valid command. Writing file...")
             filepath = os.path.join(SERVER_PATH, name)
-            with open(filepath, "wb") as f:
+            with open(filepath, "w") as f:
                 f.write(text)
 
             logging.info("Uploaded file \"{filename}\"")

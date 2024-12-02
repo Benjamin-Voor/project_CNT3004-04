@@ -182,7 +182,7 @@ def main():
                 else:
                     client.send(cmd.encode(FORMAT))
 
-            else:
+            case _:
                 client.send(cmd.encode(FORMAT))
 
     print("Disconnected from the server.")

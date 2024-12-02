@@ -73,13 +73,16 @@ def handle_client (conn,addr):
                     send_data += "RMDIR: Remove an old directory, but not recursively."
                 conn.send(send_data.encode(FORMAT))
 
+
             case "ERROR":
                 send_data = "ERROR@"
                 send_data += "Try again."
                 conn.send(send_data.encode(FORMAT))
 
+
             case "LOGOUT":
                 break
+
 
             case "LIST_SERVER":
                 files = list_directory_contents(SERVER_DATA_PATH)
@@ -90,7 +93,6 @@ def handle_client (conn,addr):
                 else:
                     send_data += "\n".join(f for f in files)
                 conn.send(send_data.encode(FORMAT))
-
 
 
             case "UPLOAD":
@@ -122,7 +124,6 @@ def handle_client (conn,addr):
                 metrics.end_response()  # Record end time of response
                 response_time = metrics.get_response_time()
                 logging.info(f"Response time for UPLOAD: {response_time:.2f} seconds")
-
 
 
             case "DOWNLOAD":
@@ -172,6 +173,7 @@ def handle_client (conn,addr):
                     else:
                         send_data += "File not found."
                 conn.send(send_data.encode(FORMAT))
+
 
             case "MKDIR":
                 if len(data) >= 2:
@@ -227,6 +229,9 @@ def handle_client (conn,addr):
                 send_data = "ERROR@"
                 send_data += "Unknown command."
                 conn.send(send_data.encode(FORMAT))
+
+
+
 
     print(f"[DISCONNECTED] {addr} disconnected")
     conn.close()

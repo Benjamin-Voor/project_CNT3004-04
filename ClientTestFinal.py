@@ -91,8 +91,10 @@ def main():
             case "LIST_SERVER":
                 client.send(cmd.encode(FORMAT))
 
+
             case "HELP":
                 client.send(cmd.encode(FORMAT))
+
 
             case "UPLOAD":
                 try:
@@ -115,6 +117,7 @@ def main():
                     prRed(f"An error occurred during file upload: {e}")
                     cmd = "ERROR"
                     client.send(cmd.encode(FORMAT))
+
 
             case "DOWNLOAD":
                 try:
@@ -159,6 +162,7 @@ def main():
                     cmd = "ERROR"
                     client.send(cmd.encode(FORMAT))
 
+
             case "DELETE":
                 if len(data) == 2:
                     path = data[1]
@@ -166,12 +170,14 @@ def main():
                 else:
                     client.send(cmd.encode(FORMAT))
 
+
             case "MKDIR":
                 if len(data) == 2:
                     dir_name = data[1]
                     client.send(f"{cmd}@{dir_name}".encode(FORMAT))
                 else:
                     client.send(cmd.encode(FORMAT))
+
 
             case "RMDIR":
                 if len(data) == 2:
@@ -181,6 +187,7 @@ def main():
                     client.send(send_data.encode(FORMAT))
                 else:
                     client.send(cmd.encode(FORMAT))
+
 
             case _:
                 client.send(cmd.encode(FORMAT))

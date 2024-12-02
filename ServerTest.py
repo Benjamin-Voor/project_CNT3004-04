@@ -65,26 +65,27 @@ def handle_client (conn,addr):
         try:
             cmd, data = receive_from_client(conn)
             if not data:
-                break # Don't check if-statements until data is received.
+                break  # Don't check if-statements until data is received.
         except ConnectionResetError:
             break
 
         if cmd == "HELP":
-            send_data = "OK@"
-            send_data += "LIST: Lists all files currently in the server.\n"
-            send_data += "UPLOAD <path>: Uploads a new file to the server.\n" # Note: Include 'client_data/' at the start and file extension at the end.
-            send_data += "DELETE <filename>: Deletes a file from the server.\n" # Do not include file extension
-            send_data += "LOGOUT: Disconnects from the server.\n"
-            send_data += "HELP: Displays all client commands for the server.\n"
-            send_data += "MKDIR: Create a new directory recursively. That means while making leaf directory if any intermediate-level directory is missing, MKDIR will create them all (separated by \'/\').\n"
-            send_data += "RMDIR: Remove an old directory recursively."
+            if not (access_granted and received_username):
+                send_data = "OK@"
+                send_data += "LOGOUT: Disconnects from the server.\n"
+            else:
+                send_data = "OK@"
+                send_data += "LIST_SERVER: Lists all files currently in the server.\n"
+                send_data += "UPLOAD <path>: Uploads a new file to the server.\n" # Note: Include 'client_data/' at the start and file extension at the end.
+                send_data += "DELETE <filename>: Deletes a file from the server.\n" # Do not include file extension
+                send_data += "LOGOUT: Disconnects from the server.\n"
+                send_data += "HELP: Displays all client commands for the server.\n"
+                send_data += "MKDIR: Create a new directory recursively. That means while making leaf directory if any intermediate-level directory is missing, MKDIR will create them all (separated by \'/\').\n"
+                send_data += "RMDIR: Remove an old directory recursively."
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "LOGOUT":
             break
-
-        elif cmd == "LIST":
-            files = os.listdir(SERVER_DATA_PATH)
 
         elif cmd == "LIST_SERVER":
             files = list_directory_contents(SERVER_DATA_PATH)
@@ -178,7 +179,7 @@ def handle_client (conn,addr):
                 logging.debug(f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.")
                 raise IndexError(f"Invalid input for \"{cmd}\" command. Enter \"HELP\" for correct implementation.", f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.") from e
 
-            filepath = os.path.join(SERVER_PATH, name)
+            filepath = os.path.join(SERVER_DATA_PATH, name)
             try:
                 os.rmdir(filepath)
             except OSError as e:
@@ -198,10 +199,11 @@ def handle_client (conn,addr):
 
 
 def authentication(conn):
+    # Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
     username = "username"
     password = "password"
 
-    # username
+    ### username
     conn.send("UNAUTHENTICATED@Enter username (no spaces)".encode(FORMAT))
     received_username: bool = False
     hash_username = hashlib.new('sha256', username.encode(FORMAT)).hexdigest()  # encryption
@@ -215,9 +217,8 @@ def authentication(conn):
         else:
             conn.send("UNAUTHENTICATED@Wrong username. Access denied!".encode(FORMAT))
 
-    # password
+    ### password
     conn.send("UNAUTHENTICATED@Enter password (no spaces)".encode(FORMAT))
-    # Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
     access_granted: bool = False
     hash_password = hashlib.new('sha256', password.encode(FORMAT)).hexdigest()  # encryption
     while not access_granted and received_username:

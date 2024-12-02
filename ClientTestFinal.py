@@ -57,24 +57,25 @@ def main():
             cmd, msg = data.split("@", 1)
         else:
             cmd, msg = data, ""
-
-        if cmd == "UNAUTHENTICATED":
-            access_granted = False
-            print(f"{msg}")
-        elif cmd == "OK":
-            access_granted = True
-            print(f"{msg}")
-        elif cmd == "ERROR":
-            prRed(f"{msg}")
-        elif cmd == "DISCONNECTED":
-            print(f"[SERVER]: {msg}")
-            break
-        else:
-            print(f"{msg}")
+        match cmd:
+            case "UNAUTHENTICATED":
+                access_granted = False
+                print(f"{msg}")
+            case "OK":
+                access_granted = True
+                print(f"{msg}")
+            case "ERROR":
+                prRed(f"{msg}")
+            case "DISCONNECTED":
+                print(f"[SERVER]: {msg}")
+                break
+            case _:
+                print(f"{msg}")
 
         data = input("> ")
         data = data.split(" ")
         cmd = data[0]
+
 
         # This is the only command that does not require access_granted
         if cmd == "LOGOUT":
@@ -85,102 +86,104 @@ def main():
             password_attempt = hashlib.sha256(cmd.encode(FORMAT)).hexdigest() # encrypt before sending
             client.send(password_attempt.encode(FORMAT))  # send password attempt
 
-        elif cmd == "LIST_SERVER":
-            client.send(cmd.encode(FORMAT))
 
-        elif cmd == "HELP":
-            client.send(cmd.encode(FORMAT))
-
-        elif cmd == "UPLOAD":
-            try:
-                path = data[1]
-                filename = os.path.basename(path)
-                if os.path.exists(path):
-                    with open(path, "rb") as f:
-                        file_data = f.read()
-
-                    send_data = f"{cmd}@{filename}@{len(file_data)}"
-                    client.send(send_data.encode(FORMAT))
-
-                    for i in range(0, len(file_data), SIZE):
-                        client.send(file_data[i:i + SIZE])
-
-                    print(f"File {filename} has been sent successfully.")
-                else:
-                    print(f"Error: Requested file {path} does not exist.")
-            except Exception as e:
-                prRed(f"An error occurred during file upload: {e}")
-                cmd = "ERROR"
+        match cmd:
+            case "LIST_SERVER":
                 client.send(cmd.encode(FORMAT))
 
-        elif cmd == "DOWNLOAD":
-            try:
-                filename = data[1]
-                client.send(f"{cmd}@{filename}".encode(FORMAT))
+            case "HELP":
+                client.send(cmd.encode(FORMAT))
 
-                response = client.recv(SIZE).decode(FORMAT)
-                print(f"Response from server: {response}")
+            case "UPLOAD":
+                try:
+                    path = data[1]
+                    filename = os.path.basename(path)
+                    if os.path.exists(path):
+                        with open(path, "rb") as f:
+                            file_data = f.read()
 
-                if "@" in response:
-                    response_cmd, response_msg = response.split("@", 1)
-                    if response_cmd == "OK":
-                        file_size = int(response_msg)
-                        file_path = os.path.join(CLIENT_DATA_PATH, filename)
+                        send_data = f"{cmd}@{filename}@{len(file_data)}"
+                        client.send(send_data.encode(FORMAT))
 
-                        with open(file_path, "wb") as f:
-                            bytes_received = 0
-                            while bytes_received < file_size:
-                                chunk = client.recv(SIZE)
-                                if not chunk:
-                                    #print("No more data received.")
-                                    break
-                                f.write(chunk)
-                                bytes_received += len(chunk)
-                                #print(f"Bytes received: {bytes_received}")
+                        for i in range(0, len(file_data), SIZE):
+                            client.send(file_data[i:i + SIZE])
 
-                        print(f"File {filename} has been downloaded successfully.")
-                        continue
+                        print(f"File {filename} has been sent successfully.")
                     else:
-                        print(f"Error: {response_msg}")
-                        cmd = "ERROR"
-                        client.send(cmd.encode(FORMAT))
-                        continue
-                else:
-                    print(f"Unexpected server response: {response}")
+                        print(f"Error: Requested file {path} does not exist.")
+                except Exception as e:
+                    prRed(f"An error occurred during file upload: {e}")
                     cmd = "ERROR"
                     client.send(cmd.encode(FORMAT))
-                # Ensure the loop continues after handling the response
-                continue
-            except Exception as e:
-                prRed(f"An error occurred during file download: {e}")
-                cmd = "ERROR"
-                client.send(cmd.encode(FORMAT))
 
-        elif cmd == "DELETE":
-            if len(data) == 2:
-                path = data[1]
-                client.send(f"{cmd}@{path}".encode(FORMAT))
+            case "DOWNLOAD":
+                try:
+                    filename = data[1]
+                    client.send(f"{cmd}@{filename}".encode(FORMAT))
+
+                    response = client.recv(SIZE).decode(FORMAT)
+                    print(f"Response from server: {response}")
+
+                    if "@" in response:
+                        response_cmd, response_msg = response.split("@", 1)
+                        if response_cmd == "OK":
+                            file_size = int(response_msg)
+                            file_path = os.path.join(CLIENT_DATA_PATH, filename)
+
+                            with open(file_path, "wb") as f:
+                                bytes_received = 0
+                                while bytes_received < file_size:
+                                    chunk = client.recv(SIZE)
+                                    if not chunk:
+                                        #print("No more data received.")
+                                        break
+                                    f.write(chunk)
+                                    bytes_received += len(chunk)
+                                    #print(f"Bytes received: {bytes_received}")
+
+                            print(f"File {filename} has been downloaded successfully.")
+                            continue
+                        else:
+                            print(f"Error: {response_msg}")
+                            cmd = "ERROR"
+                            client.send(cmd.encode(FORMAT))
+                            continue
+                    else:
+                        print(f"Unexpected server response: {response}")
+                        cmd = "ERROR"
+                        client.send(cmd.encode(FORMAT))
+                    # Ensure the loop continues after handling the response
+                    continue
+                except Exception as e:
+                    prRed(f"An error occurred during file download: {e}")
+                    cmd = "ERROR"
+                    client.send(cmd.encode(FORMAT))
+
+            case "DELETE":
+                if len(data) == 2:
+                    path = data[1]
+                    client.send(f"{cmd}@{path}".encode(FORMAT))
+                else:
+                    client.send(cmd.encode(FORMAT))
+
+            case "MKDIR":
+                if len(data) == 2:
+                    dir_name = data[1]
+                    client.send(f"{cmd}@{dir_name}".encode(FORMAT))
+                else:
+                    client.send(cmd.encode(FORMAT))
+
+            case "RMDIR":
+                if len(data) == 2:
+                    dir_name = data[1]
+                    file_path = dir_name.split("/")[-1]
+                    send_data = f"{cmd}@{file_path}"
+                    client.send(send_data.encode(FORMAT))
+                else:
+                    client.send(cmd.encode(FORMAT))
+
             else:
                 client.send(cmd.encode(FORMAT))
-
-        elif cmd == "MKDIR":
-            if len(data) == 2:
-                dir_name = data[1]
-                client.send(f"{cmd}@{dir_name}".encode(FORMAT))
-            else:
-                client.send(cmd.encode(FORMAT))
-
-        elif cmd == "RMDIR":
-            if len(data) == 2:
-                dir_name = data[1]
-                file_path = dir_name.split("/")[-1]
-                send_data = f"{cmd}@{file_path}"
-                client.send(send_data.encode(FORMAT))
-            else:
-                client.send(cmd.encode(FORMAT))
-
-        else:
-            client.send(cmd.encode(FORMAT))
 
     print("Disconnected from the server.")
     client.close()

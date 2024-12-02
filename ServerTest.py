@@ -13,8 +13,8 @@ FORMAT = "utf-8"
 SERVER_DATA_PATH = "server_data"
 
 ### Ensures that the server data path exists
-if not os.path.exists(SERVER_PATH):
-    os.makedirs(SERVER_PATH)
+if not os.path.exists(SERVER_DATA_PATH):
+    os.makedirs(SERVER_DATA_PATH)
 
 def list_directory_contents(directory):
     file_list = []
@@ -32,73 +32,119 @@ def handle_client(conn, addr):
 
     while True:
         data = conn.recv(SIZE).decode(FORMAT)
-        print(data)
+        if not data:
+            break # Don't check if-statements until data is received.
         data = data.split("@")
-        print(data)
         cmd = data[0]
 
-        if cmd == "HELP":
-            send_data = "OK@"
-            send_data += "LIST: Lists all files currently in the server.\n"
-            send_data += "UPLOAD <path>: Uploads a new file to the server.\n"
-            send_data += "DELETE <filename>: Deletes a file from the server.\n"
-            send_data += "LOGOUT: Disconnects from the server.\n"
-            send_data += "HELP: Displays all client commands for the server.\n"
-
-            conn.send(send_data.encode(FORMAT))
-
-        elif cmd == "LOGOUT":
-            break
-
-        elif cmd == "LIST":
-            files = os.listdir(SERVER_PATH)
+        if cmd == "LIST_SERVER":
+            files = list_directory_contents(SERVER_DATA_PATH)
             send_data = "OK@"
 
             if len(files) == 0:
-                send_data += "The server currenly has no files."
+                send_data += "The server directory is empty"
             else:
                 send_data += "\n".join(f for f in files)
             conn.send(send_data.encode(FORMAT))
 
         elif cmd == "UPLOAD":
-            name = data[1]
-            text = data[2]
+            if len(data) >= 3:
+                name = data[1]
+                file_size = int(data[2])
+                filepath = os.path.join(SERVER_DATA_PATH, name)
 
-            filepath = os.path.join(SERVER_PATH, name)
-            with open(filepath, "w") as f:
-                f.write(text)
+                with open(filepath, "wb") as f:
+                    bytes_received = 0
+                    while bytes_received < file_size:
+                        chunk = conn.recv(SIZE)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        bytes_received += len(chunk)
+                send_data = "OK@File uploaded successfully."
+                conn.send(send_data.encode(FORMAT))
+            else:
+                send_data = "ERROR@Invalid upload data."
+                conn.send(send_data.encode(FORMAT))
 
-            send_data = "OK@File has been successfully uploaded."
-            conn.send(send_data.encode(FORMAT))
+        elif cmd == "DOWNLOAD":
+            filename = data[1]
+            filepath = os.path.join(SERVER_DATA_PATH, filename)
+            if os.path.exists(filepath):
+                file_size = os.path.getsize(filepath)
+                conn.send(f"OK@{file_size}".encode(FORMAT))
+                with open(filepath, "rb") as f:
+                    bytes_sent = 0
+                    while bytes_sent < file_size:
+                        chunk = f.read(SIZE)
+                        conn.send(chunk)
+                        bytes_sent += len(chunk)
+            else:
+                send_data = "ERROR@File not found."
+                conn.send(send_data.encode(FORMAT))
 
         elif cmd == "DELETE":
-            files = os.listdir(SERVER_PATH)
+            files = os.listdir(SERVER_DATA_PATH)
             send_data = "OK@"
             filename = data[1]
 
             if len(files) == 0:
-                send_data += "The server has no files."
+                send_data += "The server directory is empty"
             else:
                 if filename in files:
-                    os.remove(f"{SERVER_PATH}/{filename}")
-                    send_data += "File has been successfully deleted."
+                    os.remove(f"{SERVER_DATA_PATH}/{filename}")
+                    send_data += "File deleted successfully."
                 else:
-                    send_data += "Error: file does not exist."
+                    send_data += "File not found."
             conn.send(send_data.encode(FORMAT))
 
+        elif cmd == "MAKEDIR":
+            if len(data) >= 2:
+                dir_name = data[1]
+                dir_path = os.path.join(SERVER_DATA_PATH, dir_name)
+                if not os.path.exists(dir_path):
+                    os.makedirs(dir_path)
+                    send_data = f"OK@Directory {dir_name} created successfully."
+                else:
+                    send_data = f"ERROR@Directory {dir_name} already exists."
+                conn.send(send_data.encode(FORMAT))
+            else:
+                send_data = "ERROR@Invalid directory name."
+                conn.send(send_data.encode(FORMAT))
 
-    print(f"[CONNECTION TERMINATED] USER: {addr} has disconnected.")
+        elif cmd == "LOGOUT":
+            break
+
+        elif cmd == "HELP":
+            send_data = "OK@"
+            send_data += "LIST_SERVER or DIRS: List all the files and directories from the server.\n"
+            send_data += "UPLOAD <path>: Upload a file to the server.\n"
+            send_data += "DOWNLOAD <filename>: Download a file from the server.\n"
+            send_data += "DELETE <filename>: Delete a file from the server.\n"
+            send_data += "MAKEDIR <dirname>: Create a directory on the server.\n"
+            send_data += "LOGOUT: Disconnect from the server.\n"
+            send_data += "HELP: List all the commands."
+            conn.send(send_data.encode(FORMAT))
+
+        else:
+            send_data = "ERROR@Unknown command."
+            conn.send(send_data.encode(FORMAT))
+
+    print(f"[DISCONNECTED] {addr} disconnected")
+    conn.close()
 
 def main():
-    print("Starting the server")
-    server = socket.socket(socket.AF_INET,socket.SOCK_STREAM) ## used IPV4 and TCP connection
+    print("[STARTING] Server is starting")
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) ## used IPV4 and TCP connection
     server.bind(ADDR) # bind the address
     server.listen() ## start listening
-    print(f"Server is listening on {IP}: {PORT}")
+    print(f"[LISTENING] Server is listening on {IP}:{PORT}.")
+
     while True:
         conn, addr = server.accept() ### accept a connection from a client
-        thread = threading.Thread(target = handle_client, args = (conn, addr)) ## assigning a thread for each client
+        thread = threading.Thread(target=handle_client, args=(conn, addr)) ## assigning a thread for each client
         thread.start()
+        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
 if __name__ == "__main__":
     main()

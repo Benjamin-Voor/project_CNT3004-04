@@ -23,6 +23,8 @@ if not os.path.exists(CLIENT_DATA_PATH):
     os.makedirs(CLIENT_DATA_PATH) # Ensure client_data folder exists
 # Equivalent to `os.makedirs(CLIENT_DATA, exist_ok=True)`
 
+def prRed(skk): print("\033[91m {}\033[00m" .format(skk)) # Source: Geeks For Geeks: https://www.geeksforgeeks.org/print-colors-python-terminal/
+
 logger = logging.getLogger('my logger')
 logger.setLevel(logging.DEBUG)
 logging.basicConfig(
@@ -50,8 +52,6 @@ def main():
     while True:
 
         ### multiple communications
-        if not client:
-            raise Exception("Why is it not connected!?")
         data = client.recv(SIZE).decode(FORMAT)
         if "@" in data:
             cmd, msg = data.split("@", 1)
@@ -65,12 +65,10 @@ def main():
             access_granted = True
             print(f"{msg}")
         elif cmd == "ERROR":
-            logging.error(f"{msg}")
-
+            prRed(f"{msg}")
         elif cmd == "DISCONNECTED":
             print(f"[SERVER]: {msg}")
             break
-
         else:
             print(f"{msg}")
 
@@ -111,7 +109,9 @@ def main():
                 else:
                     print(f"Error: Requested file {path} does not exist.")
             except Exception as e:
-                print(f"An error occurred during file upload: {e}")
+                prRed(f"An error occurred during file upload: {e}")
+                cmd = "ERROR"
+                client.send(cmd.encode(FORMAT))
 
         elif cmd == "DOWNLOAD":
             try:
@@ -142,21 +142,26 @@ def main():
                         continue
                     else:
                         print(f"Error: {response_msg}")
+                        cmd = "ERROR"
+                        client.send(cmd.encode(FORMAT))
                         continue
                 else:
                     print(f"Unexpected server response: {response}")
+                    cmd = "ERROR"
+                    client.send(cmd.encode(FORMAT))
                 # Ensure the loop continues after handling the response
                 continue
             except Exception as e:
-                print(f"An error occurred during file download: {e}")
-                continue
+                prRed(f"An error occurred during file download: {e}")
+                cmd = "ERROR"
+                client.send(cmd.encode(FORMAT))
 
         elif cmd == "DELETE":
-            try:
+            if len(data) == 2:
                 path = data[1]
-            except IndexError as e:
-                raise IndexError("Invalid input for DELETE command. Enter \"HELP\" for correct implementation.") from e
-            client.send(f"{cmd}@{path}".encode(FORMAT))
+                client.send(f"{cmd}@{path}".encode(FORMAT))
+            else:
+                client.send(cmd.encode(FORMAT))
 
         elif cmd == "MKDIR":
             if len(data) == 2:
@@ -166,14 +171,13 @@ def main():
                 client.send(cmd.encode(FORMAT))
 
         elif cmd == "RMDIR":
-            try:
-                path = data[1]
-            except IndexError as e:
-                raise IndexError(f"Invalid input for {cmd} command. Enter \"HELP\" for correct implementation.") from e
-
-            file_path = path.split("/")[-1]
-            send_data = f"{cmd}@{file_path}"
-            client.send(send_data.encode(FORMAT))
+            if len(data) == 2:
+                dir_name = data[1]
+                file_path = path.split("/")[-1]
+                send_data = f"{cmd}@{file_path}"
+                client.send(send_data.encode(FORMAT))
+            else:
+                client.send(cmd.encode(FORMAT))
 
         else:
             client.send(cmd.encode(FORMAT))

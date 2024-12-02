@@ -84,6 +84,11 @@ def handle_client (conn,addr):
                 send_data += "RMDIR: Remove an old directory recursively."
             conn.send(send_data.encode(FORMAT))
 
+        elif cmd == "ERROR":
+            send_data = "ERROR@"
+            send_data += "Try again."
+            conn.send(send_data.encode(FORMAT))
+
         elif cmd == "LOGOUT":
             break
 
@@ -132,17 +137,17 @@ def handle_client (conn,addr):
                         conn.send(chunk)
                         bytes_sent += len(chunk)
             else:
-                send_data = "ERROR@File not found."
+                send_data = "ERROR@"
+                send_data += "File not found."
                 conn.send(send_data.encode(FORMAT))
 
         elif cmd == "DELETE":
             files = os.listdir(SERVER_DATA_PATH)
             send_data = "OK@"
-            try:
+            if len(data) == 2:
                 filename = data[1]
-            except IndexError as e:
-                logging.debug(f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.")
-                raise IndexError(f"Invalid input for \"{cmd}\" command. Enter \"HELP\" for correct implementation.", f"Fix the try-except block for \"{cmd}\" command in ClientTest.py.") from e
+            else:
+                invalid_input(cmd, conn)
 
             if len(files) == 0:
                 send_data += "The server directory is empty"
@@ -196,6 +201,13 @@ def handle_client (conn,addr):
 
     print(f"[DISCONNECTED] {addr} disconnected")
     conn.close()
+
+
+def invalid_input(cmd, conn):
+    send_data = "ERROR@"
+    send_data += f"Invalid input for \"{cmd}\" command. Enter \"HELP\" for correct implementation."
+    conn.send(send_data.encode(FORMAT))
+    return send_data
 
 
 def authentication(conn):

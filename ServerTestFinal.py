@@ -205,24 +205,16 @@ def handle_client (conn,addr):
                     if not os.path.exists(filepath):
                         logging.debug(f"Directory not found: {filepath}")
                         send_data = f"ERROR@Directory \"{name}\" does not exist."
-                        cmd = "ERROR"
-                        # conn.send(send_data.encode(FORMAT)) # This is done in finally statement
-                        continue
                     # Ensure the directory is empty
                     if os.listdir(filepath):
                         send_data = f"ERROR@Directory \"{name}\" is not empty."
-                        cmd = "ERROR"
-                        # conn.send(send_data.encode(FORMAT)) # # This is done in finally statement
-                        continue
                     os.rmdir(filepath)
                     logging.info(f"Removed directory \"{name}\"")
                     send_data += f"Directory \"{name}\" has been successfully removed!"
                 except IndexError as e:
                     send_data = f"ERROR@Invalid input for \"{cmd}\" command. {e}"
-                    cmd = "ERROR"
                 except OSError as e:
                     send_data += f"Directory \"{name}\" cannot be removed. {e}"
-                    cmd = "ERROR"
                 finally:
                     conn.send(send_data.encode(FORMAT))
             case _:

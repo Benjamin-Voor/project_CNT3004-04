@@ -9,6 +9,8 @@ import socket
 import hashlib
 import logging
 
+from ServerTestFinal import authentication
+
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
     # If both server and client are the same machine, then use these commands:
@@ -72,20 +74,23 @@ def main():
             case _:
                 print(f"{msg}")
 
+
+
+        if not access_granted:
+            # This is the only command that does not require access_granted
+            if cmd == "LOGOUT":
+                client.send(cmd.encode(FORMAT))
+                break
+
+
+            authentication_attempt = input("> ") # supports spaces
+            authentication_attempt_hashed = hashlib.sha256(authentication_attempt.encode(FORMAT)).hexdigest() # encrypt before sending
+            client.send(authentication_attempt_hashed.encode(FORMAT))  # send authentication attempt
+            continue
+
         data = input("> ")
         data = data.split(" ")
         cmd = data[0]
-
-
-        # This is the only command that does not require access_granted
-        if cmd == "LOGOUT":
-            client.send(cmd.encode(FORMAT))
-            break
-
-        elif not access_granted:
-            password_attempt = hashlib.sha256(cmd.encode(FORMAT)).hexdigest() # encrypt before sending
-            client.send(password_attempt.encode(FORMAT))  # send password attempt
-
 
         match cmd:
             case "LIST_SERVER":
@@ -97,26 +102,22 @@ def main():
 
 
             case "UPLOAD":
-                try:
-                    path = data[1]
-                    filename = os.path.basename(path)
-                    if os.path.exists(path):
-                        with open(path, "rb") as f:
-                            file_data = f.read()
+                path = data[1]
+                filename = os.path.basename(path)
+                if os.path.exists(path):
+                    with open(path, "rb") as f:
+                        file_data = f.read()
 
-                        send_data = f"{cmd}@{filename}@{len(file_data)}"
-                        client.send(send_data.encode(FORMAT))
+                    send_data = f"{cmd}@{filename}@{len(file_data)}"
+                    client.send(send_data.encode(FORMAT))
 
-                        for i in range(0, len(file_data), SIZE):
-                            client.send(file_data[i:i + SIZE])
+                    for i in range(0, len(file_data), SIZE):
+                        client.send(file_data[i:i + SIZE])
 
-                        print(f"File {filename} has been sent successfully.")
-                    else:
-                        print(f"Error: Requested file {path} does not exist.")
-                except Exception as e:
-                    prRed(f"An error occurred during file upload: {e}")
-                    cmd = "ERROR"
-                    client.send(cmd.encode(FORMAT))
+                    print(f"File {filename} has been sent successfully.")
+                else:
+                    print(f"Error: Requested file {path} does not exist.")
+                client.send(cmd.encode(FORMAT))
 
 
             case "DOWNLOAD":

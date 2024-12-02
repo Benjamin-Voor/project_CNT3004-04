@@ -20,6 +20,7 @@ SIZE = 65536
 FORMAT = "utf-8"
 SERVER_DATA_PATH = "server_data"
 
+
 ### Ensures that the server data path exists
 if not os.path.exists(SERVER_DATA_PATH):
     os.makedirs(SERVER_DATA_PATH)
@@ -32,6 +33,13 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='[%(asctime)s] %(levelname)s: %(message)s',
     datefmt='%m/%d/%Y %I:%M:%S %p')
+
+
+# Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
+USERNAME = "username with spaces"
+PASSWORD = "password with spaces"
+
+
 def list_directory_contents(directory):
     file_list = []
     for root, dirs, files in os.walk(directory):
@@ -51,7 +59,7 @@ def handle_client (conn,addr):
     while access_granted and received_username:
         try:
             cmd, data = receive_from_client(conn)
-            if not data:
+            if not (cmd and data):
                 break  # Don't check if-statements until data is received.
         except ConnectionResetError:
             break
@@ -238,37 +246,50 @@ def invalid_input(cmd, conn):
 
 def authentication(conn):
     # Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
-    username = "username"
-    password = "password"
+    # Note: USERNAME and PASSWORD are globally-defined near the top of this file.
 
     ### username
-    conn.send("UNAUTHENTICATED@Enter username (no spaces)".encode(FORMAT))
+    conn.send("UNAUTHENTICATED@Enter username (including spaces)".encode(FORMAT))
     received_username: bool = False
-    hash_username = hashlib.new('sha256', username.encode(FORMAT)).hexdigest()  # encryption
-    while not received_username:
-        cmd, data = receive_from_client(conn)
+    access_granted: bool = False
+    hash_username = hashlib.new('sha256', USERNAME.encode(FORMAT)).hexdigest()  # encryption
+    while not received_username and not access_granted:
+        try:
+            cmd = conn.recv(SIZE).decode(FORMAT)
+            if not cmd:
+                continue  # Don't check if-statements until data is received.
+        except ConnectionResetError:
+            break
         if cmd == hash_username:
             received_username = True
+            logging.info("Correct username entered (including spaces)")
+            conn.send("UNAUTHENTICATED@Enter password".encode(FORMAT))
             break  # go to entering password
         elif cmd == "LOGOUT":
             break  # disconnect
         else:
             conn.send("UNAUTHENTICATED@Wrong username. Access denied!".encode(FORMAT))
 
+    cmd = "" # Do not input username to password function
+
     ### password
-    conn.send("UNAUTHENTICATED@Enter password (no spaces)".encode(FORMAT))
-    access_granted: bool = False
-    hash_password = hashlib.new('sha256', password.encode(FORMAT)).hexdigest()  # encryption
+    hash_password = hashlib.new('sha256', PASSWORD.encode(FORMAT)).hexdigest()  # encryption
     while not access_granted and received_username:
-        cmd, data = receive_from_client(conn)
+        try:
+            cmd = conn.recv(SIZE).decode(FORMAT)
+            if not cmd:
+                continue  # Don't check if-statements until data is received.
+        except ConnectionResetError:
+            break
         if cmd == hash_password:  # cmd is already hashed.
+            logging.info("Correct password entered")
             conn.send("OK@Welcome to the File Server.".encode(FORMAT))
             access_granted = True
             break
         elif cmd == "LOGOUT":
             break
         else:
-            conn.send("UNAUTHENTICATED@Wrong password. Access denied!".encode(FORMAT))
+            conn.send(f"UNAUTHENTICATED@Wrong password. Access denied!".encode(FORMAT))
     return access_granted, received_username
 
 

@@ -15,12 +15,12 @@ IP = "localhost"
         # "localhost" # socket.gethostbyname(socket.gethostname())
 PORT = 4450 # Make sure the port matches with the server
 ADDR = (IP, PORT)
-SIZE = 1024  ## byte .. buffer size
 FORMAT = "utf-8"
-CLIENT_DATA = "client_data"
+SIZE = 1024
+CLIENT_DATA_PATH = "client_data"
 
-if not os.path.exists(CLIENT_DATA):
-    os.makedirs(CLIENT_DATA) # Make client_data folder if it doesn't exist
+if not os.path.exists(CLIENT_DATA_PATH):
+    os.makedirs(CLIENT_DATA_PATH) # Ensure client_data folder exists
 # Equivalent to `os.makedirs(CLIENT_DATA, exist_ok=True)`
 
 logger = logging.getLogger('my logger')
@@ -50,29 +50,28 @@ def main():
 
     while True:
 
-
         ### multiple communications
         data = client.recv(SIZE).decode(FORMAT)
-        cmd, msg = data.split("@")
+        if "@" in data:
+            cmd, msg = data.split("@", 1)
+        else:
+            cmd, msg = data, ""
 
         if cmd == "UNAUTHENTICATED":
             access_granted = False
             print(f"{msg}")
-        if cmd == "OK":
+        elif cmd == "OK":
             access_granted = True
             print(f"{msg}")
+        elif cmd == "ERROR":
+            logging.error(f"{msg}")
 
-        # Benjamin believes the block below is a typo:
-        elif cmd == "DISCONNECT" and not typo:
-            print(f"msg")
-            break
-
-        # Idiot Developer types it differently at timestamp 18:04
-        # Hyperlink: https://youtu.be/FQ-scCeKWas?si=Z7_QU1ZmvUJCsbPN
-        elif cmd == "DISCONNECTED" and typo:
+        elif cmd == "DISCONNECTED":
             print(f"[SERVER]: {msg}")
             break
 
+        else:
+            print(f"{msg}")
 
         data = input("> ")
         data = data.split(" ")
@@ -83,6 +82,8 @@ def main():
             client.send(cmd.encode(FORMAT))
             break
 
+        elif cmd == "LIST_SERVER":
+
         # authentication
         elif not access_granted:
             password_attempt = hashlib.sha256(cmd.encode(FORMAT)).hexdigest() # encrypt before sending
@@ -91,42 +92,66 @@ def main():
         elif cmd == "HELP":
             client.send(cmd.encode(FORMAT))
 
-        elif cmd == "LIST":
-            client.send(cmd.encode(FORMAT))
 
         elif cmd == "UPLOAD":
-            try:
-                path = data[1]
-            except IndexError as e:
-                raise IndexError("Invalid input for DELETE command. Enter \"HELP\" for correct implementation.") from e
-
-            filename = path.split("/")[-1]
+        try:
+            path = data[1]
+            filename = os.path.basename(path)
             if os.path.exists(path):
-                logging.info("Valid command. Writing file...")
                 with open(path, "rb") as f:
                     file_data = f.read()
 
-                # Benjamin believes the block below is a typo:
-                if not typo:
-                    send_data = f"{cmd}@{filename}@{len(file_data)}"
-                else:
-                    send_data = f"{cmd}@{filename}@{file_data}"
-                # If Drew opens and reads the uploaded text file, he'd see the contents are the length of the data, not the data itself
-                    # Unless he types it MY way (I'm Benjamin)
-
+                send_data = f"{cmd}@{filename}@{len(file_data)}"
                 client.send(send_data.encode(FORMAT))
-                if not typo:
-                    chunk_size = 1024 # chunk_size is equivalent to global constant SIZE. Why re-define here?
-                    for i in range(0, len(file_data), chunk_size):
-                        client.send(file_data[i:i+chunk_size])
-                else:
-                    for i in range(0, len(file_data), SIZE):
-                        client.send(file_data[i:i+SIZE])
+
+                for i in range(0, len(file_data), SIZE):
+                    client.send(file_data[i:i + SIZE])
 
                 print(f"File {filename} has been sent successfully.")
             else:
-                print(f"Error: Requested file does not exist.")
+                print(f"Error: Requested file {path} does not exist.")
+        except Exception as e:
+            print(f"An error occurred during file upload: {e}")
 
+
+
+        elif cmd == "DOWNLOAD":
+        try:
+            filename = data[1]
+            client.send(f"{cmd}@{filename}".encode(FORMAT))
+
+            response = client.recv(SIZE).decode(FORMAT)
+            print(f"Response from server: {response}")
+
+            if "@" in response:
+                response_cmd, response_msg = response.split("@", 1)
+                if response_cmd == "OK":
+                    file_size = int(response_msg)
+                    file_path = os.path.join(CLIENT_DATA_PATH, filename)
+
+                    with open(file_path, "wb") as f:
+                        bytes_received = 0
+                        while bytes_received < file_size:
+                            chunk = client.recv(SIZE)
+                            if not chunk:
+                                print("No more data received.")
+                                break
+                            f.write(chunk)
+                            bytes_received += len(chunk)
+                            print(f"Bytes received: {bytes_received}")
+
+                    print(f"File {filename} has been downloaded successfully.")
+                    continue
+                else:
+                    print(f"Error: {response_msg}")
+                    continue
+            else:
+                print(f"Unexpected server response: {response}")
+            # Ensure the loop continues after handling the response
+            continue
+        except Exception as e:
+            print(f"An error occurred during file download: {e}")
+            continue
 
         elif cmd == "DELETE":
             try:
@@ -137,21 +162,12 @@ def main():
                 # continue
             client.send(f"{cmd}@{path}".encode(FORMAT))
 
-        elif cmd == "DOWNLOAD":
-            print("Nope, that\'s not implemented yet!")
-            continue
-
         elif cmd == "MKDIR":
-            try:
-                path = data[1]
-            except IndexError as e:
-                raise IndexError(f"Invalid input for {cmd} command. Enter \"HELP\" for correct implementation.") from e
-                # invalid_message(cmd)
-                # continue
-
-            filename = path.split("/")[-1]
-            send_data = f"{cmd}@{path}"
-            client.send(send_data.encode(FORMAT))
+            if len(data) == 2:
+                dir_name = data[1]
+                client.send(f"{cmd}@{dir_name}".encode(FORMAT))
+            else:
+            client.send(cmd.encode(FORMAT))
 
         elif cmd == "RMDIR":
             try:
@@ -166,22 +182,10 @@ def main():
             client.send(send_data.encode(FORMAT))
 
         else:
-            print(f"[client.py]: Unknown command: {cmd}")
-
-            # Drew has " resolved the aforementioned infinite looping, it now allows you to make infinite mistakes when trying to type in commands. so if you screw up a command you can enter it and it will actually execute."
-            # Until he uploads his code, this code will break you out.
-
-            cmd = "LOGOUT"
-            client.send(cmd.encode(FORMAT))
-            break
-            # otherwise it just gets stuck on an infinite loop.
-            # Covering this edge case is not a requirement.
-            # This is not important to deal with right now.
-            # But at least now I won't have to restart the terminal every five seconds
+            logging.error(f"[client.py]: Unknown command: {cmd}")
 
     print("Disconnected from the server.")
     client.close()
-
 
 if __name__ == "__main__":
     main()

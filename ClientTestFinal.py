@@ -1,9 +1,3 @@
-# TODO: import time, and use it to calculate metrics like upload/download time and transfer rate.
-    # The project requires collecting and analyzing performance metrics.
-# TODO: cmd "DOWNLOAD"
-# TODO: cmd mkdir
-# TODO: cmd ls
-
 import os
 import socket
 import hashlib

@@ -1,8 +1,3 @@
-# TODO: Provide feedback to the user regarding the status of file transfers and operations.
-# TODO: Performance Analysis: Conduct experiments to measure the system's performance under various load conditions. Analyze the collected data to identify bottlenecks and areas for optimization.
-# TODO: Skip the security assessment. I don't know how to do that.
-# TODO: comprehensive project report
-
 import os
 import socket
 import threading

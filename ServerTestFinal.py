@@ -61,8 +61,8 @@ def handle_client (conn,addr):
                     send_data += "DELETE <filename>: Deletes a file from the server.\n" # Do not include file extension
                     send_data += "LOGOUT: Disconnects from the server.\n"
                     send_data += "HELP: Displays all client commands for the server.\n"
-                    send_data += "MKDIR: Create a new directory recursively. That means while making leaf directory if any intermediate-level directory is missing, MKDIR will create them all (separated by \'/\').\n"
-                    send_data += "RMDIR: Remove an old directory, but not recursively."
+                    send_data += "MKDIR <directory name>: Create a new directory recursively. That means while making leaf directory if any intermediate-level directory is missing, MKDIR will create them all (separated by \'/\').\n"
+                    send_data += "RMDIR <directory name>: Remove an old directory, but not recursively."
                 conn.send(send_data.encode(FORMAT))
 
 

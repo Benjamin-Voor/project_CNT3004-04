@@ -1,5 +1,6 @@
 import time
 
+
 # Dictionary to store start and end times of operations
 operation_times = {
     "upload_start": None,
@@ -10,21 +11,26 @@ operation_times = {
     "response_end": None
 }
 
+
 # Function to record the start time of an upload
 def start_upload():
     operation_times["upload_start"] = time.time()
+
 
 # Function to record the end time of an upload
 def end_upload():
     operation_times["upload_end"] = time.time()
 
+
 # Function to record the start time of a download
 def start_download():
     operation_times["download_start"] = time.time()
 
+
 # Function to record the end time of a download
 def end_download():
     operation_times["download_end"] = time.time()
+
 
 # Function to get the elapsed time for upload
 def get_upload_time():
@@ -33,6 +39,7 @@ def get_upload_time():
     else:
         return None
 
+
 # Function to get the elapsed time for download
 def get_download_time():
     if operation_times["download_start"] is not None and operation_times["download_end"] is not None:
@@ -40,13 +47,16 @@ def get_download_time():
     else:
         return None
 
+
 # Function to record the start time of a response
 def start_response():
     operation_times["response_start"] = time.time()
 
+
 # Function to record the end time of a response
 def end_response():
     operation_times["response_end"] = time.time()
+
 
 # Function to get the elapsed time for response
 def get_response_time():
@@ -54,6 +64,7 @@ def get_response_time():
         return operation_times["response_end"] - operation_times["response_start"]
     else:
         return None
+
 
 # Function to calculate the average rate of transmission
 def calculate_rate(file_size, elapsed_time):
@@ -64,6 +75,7 @@ def calculate_rate(file_size, elapsed_time):
         return rate
     else:
         return None
+
 
 # Function to print start and end times for upload, download, and response
 def print_times():

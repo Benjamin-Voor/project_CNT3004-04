@@ -102,22 +102,30 @@ def main():
 
 
             case "UPLOAD":
-                path = data[1]
-                filename = os.path.basename(path)
-                if os.path.exists(path):
-                    with open(path, "rb") as f:
-                        file_data = f.read()
+                if len(data) >= 2:
+                    path = data[1]
 
-                    send_data = f"{cmd}@{filename}@{len(file_data)}"
-                    client.send(send_data.encode(FORMAT))
+                    filename = os.path.basename(path)
+                    if os.path.exists(path):
+                        with open(path, "rb") as f:
+                            file_data = f.read()
 
-                    for i in range(0, len(file_data), SIZE):
-                        client.send(file_data[i:i + SIZE])
+                        send_data = f"{cmd}@{filename}@{len(file_data)}"
+                        client.send(send_data.encode(FORMAT))
 
-                    print(f"File {filename} has been sent successfully.")
+                        for i in range(0, len(file_data), SIZE):
+                            client.send(file_data[i:i + SIZE])
+
+                        print(f"File {filename} has been sent successfully.")
+                    else:
+                        prRed(f"Error: Requested file {path} does not exist.")
+                        cmd = "ERROR"
+                        client.send(cmd.encode(FORMAT))
                 else:
-                    print(f"Error: Requested file {path} does not exist.")
-                client.send(cmd.encode(FORMAT))
+                    prRed(f"Error: No directory name provided")
+                    cmd = "ERROR"
+                    client.send(cmd.encode(FORMAT))
+
 
 
             case "DOWNLOAD":
@@ -126,12 +134,13 @@ def main():
                     client.send(f"{cmd}@{filename}".encode(FORMAT))
 
                     response = client.recv(SIZE).decode(FORMAT)
-                    print(f"Response from server: {response}")
+                    # rRed(f"Response from server: {response}") # Not user-friendly to see
 
                     if "@" in response:
                         response_cmd, response_msg = response.split("@", 1)
                         if response_cmd == "OK":
                             file_size = int(response_msg)
+                            print(f"File exists. Size is {response_msg} bytes") # more user friendly
                             file_path = os.path.join(CLIENT_DATA_PATH, filename)
 
                             with open(file_path, "wb") as f:
@@ -148,19 +157,19 @@ def main():
                             print(f"File {filename} has been downloaded successfully.")
                             continue
                         else:
-                            print(f"Error: {response_msg}")
-                            cmd = "ERROR"
+                            prRed(f"Error: {response_msg}")
+                            cmd = "ERROR"  # This line only makes sense on Client side.
                             client.send(cmd.encode(FORMAT))
                             continue
                     else:
-                        print(f"Unexpected server response: {response}")
-                        cmd = "ERROR"
+                        prRed(f"Unexpected server response: {response}")
+                        cmd = "ERROR"  # This line only makes sense on Client side.
                         client.send(cmd.encode(FORMAT))
                     # Ensure the loop continues after handling the response
                     continue
                 except Exception as e:
                     prRed(f"An error occurred during file download: {e}")
-                    cmd = "ERROR"
+                    cmd = "ERROR"  # This line only makes sense on Client side.
                     client.send(cmd.encode(FORMAT))
 
 

@@ -6,9 +6,9 @@
 import os
 import socket
 import threading
-import hashlib
 import logging
 import metrics
+from server_methods import authentication
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -54,7 +54,7 @@ def handle_client (conn,addr):
 
     print(f"[NEW CONNECTION] {addr} connected.")
 
-    access_granted, received_username = authentication(conn)
+    access_granted, received_username = authentication(conn, FORMAT, USERNAME, PASSWORD)
 
     while access_granted and received_username:
         try:
@@ -84,7 +84,7 @@ def handle_client (conn,addr):
 
             case "ERROR":
                 send_data = "ERROR@"
-                send_data += "Try again."
+                send_data += " " # "Try again" was kind of confusing, because ¿what if they shouldn't perform the same incorrect command twice?
                 conn.send(send_data.encode(FORMAT))
 
 
@@ -131,8 +131,10 @@ def handle_client (conn,addr):
                 conn.send(send_data.encode(FORMAT))
                 metrics.end_response()  # Record end time of response
                 response_time = metrics.get_response_time()
-                logging.info(f"Response time for UPLOAD: {response_time:.2f} seconds")
-
+                if len(data) >= 3:
+                    logging.info(f"Response time for UPLOAD: {response_time:.2f} seconds")
+                else:
+                    logging.info(f"Response time for failed UPLOAD: {response_time:.2f} seconds")
 
             case "DOWNLOAD":
                 metrics.start_response()  # Record start time of response
@@ -205,20 +207,20 @@ def handle_client (conn,addr):
                 try:
                     if len(data) >= 2:
                         name = data[1]
+                        filepath = os.path.join(SERVER_DATA_PATH, name)
+                        logging.debug(f"Attempting to remove directory: {filepath}")
+                        # Ensure the directory exists
+                        if not os.path.exists(filepath):
+                            logging.debug(f"Directory not found: {filepath}")
+                            send_data = f"ERROR@Directory \"{name}\" does not exist."
+                        # Ensure the directory is empty
+                        if os.listdir(filepath):
+                            send_data = f"ERROR@Directory \"{name}\" is not empty."
+                        os.rmdir(filepath)
+                        logging.info(f"Removed directory \"{name}\"")
+                        send_data += f"Directory \"{name}\" has been successfully removed!"
                     else:
-                        raise IndexError("No directory name provided")
-                    filepath = os.path.join(SERVER_DATA_PATH, name)
-                    logging.debug(f"Attempting to remove directory: {filepath}")
-                    # Ensure the directory exists
-                    if not os.path.exists(filepath):
-                        logging.debug(f"Directory not found: {filepath}")
-                        send_data = f"ERROR@Directory \"{name}\" does not exist."
-                    # Ensure the directory is empty
-                    if os.listdir(filepath):
-                        send_data = f"ERROR@Directory \"{name}\" is not empty."
-                    os.rmdir(filepath)
-                    logging.info(f"Removed directory \"{name}\"")
-                    send_data += f"Directory \"{name}\" has been successfully removed!"
+                        send_data = "ERROR@No directory name provided"
                 except IndexError as e:
                     send_data = f"ERROR@Invalid input for \"{cmd}\" command. {e}"
                 except OSError as e:
@@ -242,55 +244,6 @@ def invalid_input(cmd, conn):
     send_data += f"Invalid input for \"{cmd}\" command. Enter \"HELP\" for correct implementation."
     conn.send(send_data.encode(FORMAT))
     return send_data
-
-
-def authentication(conn):
-    # Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
-    # Note: USERNAME and PASSWORD are globally-defined near the top of this file.
-
-    ### username
-    conn.send("UNAUTHENTICATED@Enter username (including spaces)".encode(FORMAT))
-    received_username: bool = False
-    access_granted: bool = False
-    hash_username = hashlib.new('sha256', USERNAME.encode(FORMAT)).hexdigest()  # encryption
-    while not received_username and not access_granted:
-        try:
-            cmd = conn.recv(SIZE).decode(FORMAT)
-            if not cmd:
-                continue  # Don't check if-statements until data is received.
-        except ConnectionResetError:
-            break
-        if cmd == hash_username:
-            received_username = True
-            logging.info("Correct username entered (including spaces)")
-            conn.send("UNAUTHENTICATED@Enter password".encode(FORMAT))
-            break  # go to entering password
-        elif cmd == "LOGOUT":
-            break  # disconnect
-        else:
-            conn.send("UNAUTHENTICATED@Wrong username. Access denied!".encode(FORMAT))
-
-    cmd = "" # Do not input username to password function
-
-    ### password
-    hash_password = hashlib.new('sha256', PASSWORD.encode(FORMAT)).hexdigest()  # encryption
-    while not access_granted and received_username:
-        try:
-            cmd = conn.recv(SIZE).decode(FORMAT)
-            if not cmd:
-                continue  # Don't check if-statements until data is received.
-        except ConnectionResetError:
-            break
-        if cmd == hash_password:  # cmd is already hashed.
-            logging.info("Correct password entered")
-            conn.send("OK@Welcome to the File Server.".encode(FORMAT))
-            access_granted = True
-            break
-        elif cmd == "LOGOUT":
-            break
-        else:
-            conn.send(f"UNAUTHENTICATED@Wrong password. Access denied!".encode(FORMAT))
-    return access_granted, received_username
 
 
 def receive_from_client(conn):

@@ -1,9 +1,7 @@
-import os
 import socket
 import threading
-import logging
 import metrics
-from server_methods import authentication
+from some_server_methods import *
 
 IP = "localhost"
     ### Make sure this number matches the server you're connecting to.
@@ -11,28 +9,19 @@ IP = "localhost"
         # "localhost" # socket.gethostbyname(socket.gethostname())
 PORT = 4451 # Make sure the port matches with the server
 ADDR = (IP, PORT)
-SIZE = 65536
-FORMAT = "utf-8"
-SERVER_DATA_PATH = "server_data"
+
+### The block below is already defined in some_server_methods.py
+    # SIZE = 65536
+    # FORMAT = "utf-8"
+    # SERVER_DATA_PATH = "server_data"
+    # USERNAME = "username with spaces"
+    # PASSWORD = "password with spaces"
 
 
 ### Ensures that the server data path exists
 if not os.path.exists(SERVER_DATA_PATH):
     os.makedirs(SERVER_DATA_PATH)
-# Equivalent to `os.makedirs(SERVER_PATH, exist_ok=True)`
-
-
-logger = logging.getLogger('my logger')
-logger.setLevel(logging.DEBUG)
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='[%(asctime)s] %(levelname)s: %(message)s',
-    datefmt='%m/%d/%Y %I:%M:%S %p')
-
-
-# Source: Geeks for Geeks. https://www.geeksforgeeks.org/sha-in-python/.
-USERNAME = "username with spaces"
-PASSWORD = "password with spaces"
+# Equivalent to `os.makedirs(SERVER_DATA_PATH, exist_ok=True)`
 
 
 def list_directory_contents(directory):
@@ -49,7 +38,7 @@ def handle_client (conn,addr):
 
     print(f"[NEW CONNECTION] {addr} connected.")
 
-    access_granted, received_username = authentication(conn, FORMAT, USERNAME, PASSWORD)
+    access_granted, received_username = authentication(conn) # some_server_methods.py
 
     while access_granted and received_username:
         try:
@@ -181,54 +170,17 @@ def handle_client (conn,addr):
 
 
             case "MKDIR":
-                if len(data) >= 2:
-                    dir_name = data[1]
-                    dir_path = os.path.join(SERVER_DATA_PATH, dir_name)
-                    if not os.path.exists(dir_path):
-                        os.makedirs(dir_path)
-                        logging.info("Added directory \"{name}\"")
-                        send_data = f"OK@Directory '{dir_name}' created successfully."
-                    else:
-                        send_data = f"ERROR@Directory {dir_name} already exists."
-                    conn.send(send_data.encode(FORMAT))
-                else:
-                    send_data = "ERROR@Invalid directory name."
-                    conn.send(send_data.encode(FORMAT))
+                mkdir(conn, data) # some_server_methods.py
 
 
             case "RMDIR":
 
-                send_data = "OK@"
-                try:
-                    if len(data) >= 2:
-                        name = data[1]
-                        filepath = os.path.join(SERVER_DATA_PATH, name)
-                        logging.debug(f"Attempting to remove directory: {filepath}")
-                        # Ensure the directory exists
-                        if not os.path.exists(filepath):
-                            logging.debug(f"Directory not found: {filepath}")
-                            send_data = f"ERROR@Directory \"{name}\" does not exist."
-                        # Ensure the directory is empty
-                        if os.listdir(filepath):
-                            send_data = f"ERROR@Directory \"{name}\" is not empty."
-                        os.rmdir(filepath)
-                        logging.info(f"Removed directory \"{name}\"")
-                        send_data += f"Directory \"{name}\" has been successfully removed!"
-                    else:
-                        send_data = "ERROR@No directory name provided"
-                except IndexError as e:
-                    send_data = f"ERROR@Invalid input for \"{cmd}\" command. {e}"
-                except OSError as e:
-                    send_data += f"Directory \"{name}\" cannot be removed. {e}"
-                finally:
-                    conn.send(send_data.encode(FORMAT))
+                rmdir(cmd, conn, data) # some_server_methods.py
+
             case _:
                 send_data = "ERROR@"
                 send_data += "Unknown command."
                 conn.send(send_data.encode(FORMAT))
-
-
-
 
     print(f"[DISCONNECTED] {addr} disconnected")
     conn.close()

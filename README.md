@@ -6,20 +6,34 @@
 ### Course ID: CNT3004-04
 ### By: Nasir Billah, Drew Weber, and Benjamin Voor
 
-## Contact information
-Benjamin Voor
-* school e-mail: bvoor3475@floridapoly.edu
-* GitHub username: Benjamin-Voor
+## Abstract
 
-Nasir Billah
-* school e-mail: nbillah8640@floridapoly.edu
-* GitHub username: NB2k17
+This is an implementation in the console window of multi-threaded socket programming with Python to securely transfer information over an HTTP connection. The server and client computers can parse text sent to run such commands as username/password authentication, file sharing, and directory operations (upload, download, creation and deletion). Such functionality is buttressed by error handling, SHA256 encryption, and logging the times and rates of uploading and downloading out to the console window.
+
+## What did we learn?
+
+We learned how to decompose and re-compose text, video, and images back and forth between human-readable language and machine language, so it can then be streamed bit-by-bit from server to client.
+
+## Example area of improvement
+* Higher testing in edge cases
+* Higher sophistication than SHA256 encryption
+* Higher user friendliness.
 
 ## Instructions
 
 TO run the server.py, you have to open a terminal/CMP and type python server.py.
 
 TO run the client_1.py, you have to open another separate terminal/CMP and type python client_1.py.
+
+## Contact information
+Benjamin Voor
+* LinkedIn: www.linkedin.com/in/benjamin-voor-31a270204
+* Handshake: https://app.joinhandshake.com/profiles/n2ct5a
+* GitHub username: [Benjamin-Voor](https://github.com/Benjamin-Voor)
+
+Nasir Billah
+* school e-mail: nbillah8640@floridapoly.edu
+* GitHub username: NB2k17
 
 ## References
 * https://realpython.com/python-sockets/
@@ -42,7 +56,7 @@ Files to be transferred:
 
 ## copyright?
 
-Uh, we're just students learning how to code. Also, everything we do is probably better explained by a YouTube video...
+We recommend checking out the references we cite for more in-depth training on socket programming in Python. Other than that, we deem ourselves too amateur to require a license.
 
-# Disclaimer
-This is a random GitHub post. You run this code at your own risk. We are not responsible if your server and client data are leaked. Namely, we admit that SHA256 is insufficient cryptography for password storage.
+## Disclaimer
+You run this code at your own risk. We are not responsible if your server and client data are leaked. Namely, we admit that SHA256 is insufficient cryptography for password storage. Beyond that, we recommend sending impersonal information back and forth over a trustworthy internet connection.

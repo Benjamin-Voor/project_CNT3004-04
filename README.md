@@ -10,7 +10,6 @@
 Benjamin Voor
 * school e-mail: bvoor3475@floridapoly.edu
 * GitHub username: Benjamin-Voor
-* Discord username: Fawckes
 
 Nasir Billah
 * school e-mail: nbillah8640@floridapoly.edu

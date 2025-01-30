@@ -2,7 +2,7 @@
 
 ### Instructor: <a href="https://floridapoly.edu/directory/faculty/ayesha-dina.php">Assistant Professor Dr. Ayesha S. Dina</a>
 ### Date: November 26, 2024
-### Course Name: Computer Networks and Communication, section 4
+### Course Name: Computer Networks and Communication
 ### Course ID: CNT3004-04
 ### By: Nasir Billah, Drew Weber, and Benjamin Voor
 

@@ -1,4 +1,4 @@
-# SOCKET-PROGRAMMING-with-Python project
+# Socket Programming with Python
 
 ### Instructor: <a href="https://floridapoly.edu/directory/faculty/ayesha-dina.php">Assistant Professor Dr. Ayesha S. Dina</a>
 ### Date: November 26, 2024

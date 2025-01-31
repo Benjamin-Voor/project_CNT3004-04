@@ -10,6 +10,12 @@
 
 This is an implementation in the console window of multi-threaded socket programming with Python to securely transfer information over an HTTP connection. The server and client computers can parse text sent to run such commands as username/password authentication, file sharing, and directory operations (upload, download, creation and deletion). Such functionality is buttressed by error handling, SHA256 encryption, and logging the times and rates of uploading and downloading out to the console window.
 
+## Presentation
+
+_Video_: We three filmed a video presentation to explain the code, available unlisted on YouTube at https://youtu.be/-SwENPLk5Gk.
+_Document_: Uploaded to this GitHub is a file named "SocketProgramming_Documentation," explaining the goal and development of this project.
+
+
 ## What did we learn?
 
 We learned how to decompose and re-compose text, video, and images back and forth between human-readable language and machine language, so it can then be streamed bit-by-bit from server to client.

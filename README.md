@@ -24,6 +24,7 @@ We learned how to decompose and re-compose text, video, and images back and fort
 * Higher testing in edge cases
 * Higher sophistication than SHA256 encryption
 * Higher user friendliness.
+* More complete division into Model, View, and Controller
 
 ## Instructions
 
